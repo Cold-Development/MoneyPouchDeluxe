@@ -180,8 +180,7 @@ messages:
 ```
 
 # 💻 Commands
-- **/coldpouch reload** - Reloads the plugin configuration.
-- **/coldpouchshop** - Opens the pouch shop.
+![image](https://github.com/user-attachments/assets/0d1e74b0-109d-4174-8f92-f0017273a49b)
 
 # ⚠️ Permissions
 - **coldpouches.admin** - Permission to manage the plugin and use admin commands.
