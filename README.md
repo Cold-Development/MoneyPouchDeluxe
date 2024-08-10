@@ -8,7 +8,7 @@
 - Since the good old plugin **MoneyPouch** was not updated since 2021, here you have it! A newer and updated version that will work for 1.13 up to 1.21 versions. Read the features section to see the updates.
 - This is a continuation of the original MoneyPouch plugin by LMBishop which can be found [here](https://github.com/LMBishop/MoneyPouch).
 
-## Features
+## 📦 Features
 
 - **Customizable Pouches**: Create and configure unique pouches, including using custom player head textures.
 - **Economy Integration**: Support for Vault, LemonMobCoins, and other customizable economy systems.
@@ -16,19 +16,14 @@
 - **Permission System**: Control access to different pouches via permissions.
 - **Shop System**: Includes an in-game shop where players can purchase pouches using various currencies.
 
-## Requirements
-
-- Minecraft 1.20.1
-- [Vault](https://dev.bukkit.org/projects/vault) plugin for economy support (optional)
-
-## Installation
+## 🛠️ Installation
 
 1. **Download the plugin**: Download the latest version of the ColdPouch plugin from [SpigotMC](https://www.spigotmc.org/resources/authors/padrecxsh.2013368/) page.
 2. **Install the plugin**: Copy the `.jar` file into your server's `plugins` directory.
 3. **Configure the plugin**: Run the server for the first time to generate the configuration files, then stop it. Edit the `config.yml` file to customize the plugin to your liking.
 4. **Start the server**: Start the server again to load the plugin with your custom settings.
 
-## Configuration
+## ⚙️ Configuration
 
 ### Example `config.yml`
 
@@ -189,7 +184,7 @@ messages:
   reloaded: "&8「&9ColdPouches&8」&7» ColdPouch has been reloaded."
 ```
 
-# ⚙️ Commands
+# 💻 Commands
 - **/coldpouch reload** - Reloads the plugin configuration.
 - **/coldpouchshop** - Opens the pouch shop.
 
