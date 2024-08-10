@@ -1,0 +1,27 @@
+name: ColdPouch
+version: ${version}
+main: dev.padrewin.coldpouch.ColdPouch
+author: padrewin
+softdepend: [Vault, TokenManager, LemonMobCoins]
+api-version: "1.13"
+
+commands:
+  coldpouch:
+    description: Main command for ConeyPouch
+    usage: /coldpouch
+    permission: coldpouch.admin
+    aliases: [cp]
+  coldpouchshop:
+    description: Shop command for ColdPouch
+    usage: /moneypouchshop
+    permission: coldpouch.shop
+    aliases: [cpshop]
+  coldpouchadmin:
+    description: Admin command for ColdPouch
+    usage: /coldpouchshop
+    permission: coldpouch.admin
+    aliases: [cpa]
+
+permissions:
+  coldpouch.admin:
+    description: Permission for the base command
