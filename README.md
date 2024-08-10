@@ -4,7 +4,8 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-blue.svg)<br>
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21-green.svg)
 
-**ColdPouch** is a Minecraft plugin that adds customizable pouches to your server. Players can open these pouches to receive rewards, and each pouch can be configured with different textures, names, economies, and more.
+**ColdPouch** is a Minecraft plugin that adds customizable pouches to your server. Players can open these pouches to receive rewards, and each pouch can be configured with different textures, names, economies, and more.<br>
+- Since the good old plugin **MoneyPouch** was not updated since 2021, here you have it! A newer and updated version that will work for 1.13 up to 1.21 versions. Read the features section to see the updates.
 
 ## Features
 
