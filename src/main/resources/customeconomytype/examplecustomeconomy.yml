@@ -10,3 +10,5 @@
 transaction-prize-command: "give %player% diamond %prize%"
 
 # You can configure the prefixes/suffixes the normal way in the main config
+# Use this website if you want to use CUSTOM HEADS => https://minecraft-heads.com
+# Copy and paste the "For Developers" Value key

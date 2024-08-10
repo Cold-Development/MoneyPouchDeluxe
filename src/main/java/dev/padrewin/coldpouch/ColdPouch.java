@@ -3,12 +3,7 @@ package dev.padrewin.coldpouch;
 import dev.padrewin.coldpouch.Command.ColdPouchAdminCommand;
 import dev.padrewin.coldpouch.Command.ColdPouchBaseCommand;
 import dev.padrewin.coldpouch.Command.ColdPouchShopCommand;
-import dev.padrewin.coldpouch.EconomyType.CustomEconomyType;
-import dev.padrewin.coldpouch.EconomyType.EconomyType;
-import dev.padrewin.coldpouch.EconomyType.InvalidEconomyType;
-import dev.padrewin.coldpouch.EconomyType.LemonMobCoinsEconomyType;
-import dev.padrewin.coldpouch.EconomyType.VaultEconomyType;
-import dev.padrewin.coldpouch.EconomyType.XPEconomyType;
+import dev.padrewin.coldpouch.EconomyType.*;
 import dev.padrewin.coldpouch.Listener.UseListenerLatest;
 import dev.padrewin.coldpouch.Gui.MenuController;
 import dev.padrewin.coldpouch.ItemGetter.ItemGetter;
@@ -16,6 +11,8 @@ import dev.padrewin.coldpouch.ItemGetter.ItemGetterLatest;
 import dev.padrewin.coldpouch.Title.Title;
 import dev.padrewin.coldpouch.Title.Title_Bukkit;
 import org.apache.commons.lang.StringUtils;
+import org.black_ixx.playerpoints.PlayerPoints;
+import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -52,6 +49,7 @@ public class ColdPouch extends JavaPlugin {
     private Title titleHandle;
     private ItemGetter itemGetter;
     private MenuController menuController;
+    private PlayerPointsAPI playerPointsAPI;
 
     /**
      * Gets a registered {@link EconomyType} with a specified ID.
@@ -202,7 +200,23 @@ public class ColdPouch extends JavaPlugin {
 
         super.getServer().getPluginManager().registerEvents(menuController, this);
         Bukkit.getScheduler().runTask(this, this::reload);
+
+        if (getServer().getPluginManager().getPlugin("PlayerPoints") != null) {
+            playerPointsAPI = PlayerPoints.getInstance().getAPI();
+            registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
+                    this.getConfig().getString("economy.playerpoints.prefix", ""),
+                    this.getConfig().getString("economy.playerpoints.suffix", " Points")));
+            getLogger().info("PlayerPoints found and hooked!");
+        } else {
+            getLogger().warning("PlayerPoints not found. PlayerPoints support will be disabled.");
+        }
+
     }
+
+    public PlayerPointsAPI getPlayerPointsAPI() {
+        return playerPointsAPI;
+    }
+
 
     public String getMessage(Message message) {
         return ChatColor.translateAlternateColorCodes('&', this.getConfig().getString("messages."

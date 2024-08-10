@@ -70,6 +70,10 @@
           <id>minecraft-repo</id>
           <url>https://libraries.minecraft.net/</url>
       </repository>
+      <repository>
+          <id>rosewood-repo</id>
+          <url>https://repo.rosewooddev.io/repository/public/</url>
+      </repository>
   </repositories>
 
   <dependencies>
@@ -89,6 +93,12 @@
           <groupId>com.mojang</groupId>
           <artifactId>authlib</artifactId>
           <version>3.18.38</version>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.black_ixx</groupId>
+          <artifactId>playerpoints</artifactId>
+          <version>3.2.7</version>
           <scope>provided</scope>
       </dependency>
   </dependencies>

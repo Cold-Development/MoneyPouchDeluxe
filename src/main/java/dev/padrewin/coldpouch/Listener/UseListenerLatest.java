@@ -29,11 +29,9 @@ public class UseListenerLatest extends UseListener implements Listener {
             return;
         }
 
-        // Verificăm mâna principală
         if (event.getHand() == EquipmentSlot.HAND) {
             onRightClickInMainHand(player, event);
         } else {
-            // Verificăm mâna secundară
             ItemStack offHandItem = player.getInventory().getItemInOffHand();
             if (offHandItem != null && offHandItem.getType() == Material.PLAYER_HEAD && offHandItem.hasItemMeta()) {
                 ItemMeta offHandMeta = offHandItem.getItemMeta();
@@ -51,7 +49,6 @@ public class UseListenerLatest extends UseListener implements Listener {
                                 String pouchName = pouchSkullMeta.getDisplayName();
                                 List<String> pouchLore = pouchSkullMeta.getLore();
 
-                                // Comparăm numele și lore-ul, și ne asigurăm că ambele coincid
                                 if (itemName != null && itemName.equals(pouchName) &&
                                         (itemLore != null && itemLore.equals(pouchLore))) {
                                     event.setCancelled(true);

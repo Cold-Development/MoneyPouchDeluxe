@@ -1,5 +1,8 @@
 package dev.padrewin.coldpouch.Listener;
 
+import org.black_ixx.playerpoints.PlayerPoints;
+import org.black_ixx.playerpoints.PlayerPointsAPI;
+import org.bukkit.Bukkit;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import dev.padrewin.coldpouch.ColdPouch;
@@ -7,7 +10,6 @@ import dev.padrewin.coldpouch.CustomHead;
 import dev.padrewin.coldpouch.Pouch;
 import dev.padrewin.coldpouch.EconomyType.InvalidEconomyType;
 import dev.padrewin.coldpouch.Title.Title_Other;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -19,6 +21,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Field;
@@ -54,10 +57,16 @@ public class UseListener implements Listener {
     protected void onRightClickInMainHand(Player player, Cancellable event) {
         ItemStack itemInHand = player.getItemInHand();
 
+        if (itemInHand == null || itemInHand.getType() == Material.AIR) {
+            return;
+        }
+
+        boolean pouchMatched = false;
+
         for (Pouch p : plugin.getPouches()) {
             ItemStack pouchItem = p.getItemStack();
 
-            if (itemInHand != null && itemInHand.getType() == Material.PLAYER_HEAD && pouchItem.getType() == Material.PLAYER_HEAD) {
+            if (itemInHand.getType() == Material.PLAYER_HEAD && pouchItem.getType() == Material.PLAYER_HEAD) {
                 SkullMeta skullMetaInHand = (SkullMeta) itemInHand.getItemMeta();
                 SkullMeta skullMetaPouch = (SkullMeta) pouchItem.getItemMeta();
 
@@ -68,29 +77,32 @@ public class UseListener implements Listener {
                     event.setCancelled(true);
                     usePouch(player, p);
                     removeOrReduceItem(player);
-                    return;
-                } else {
-                    Bukkit.getLogger().info("Skull textures do not match.");
+                    pouchMatched = true;
+                    break;
                 }
             } else if (pouchItem.isSimilar(itemInHand)) {
                 event.setCancelled(true);
                 usePouch(player, p);
                 removeOrReduceItem(player);
-                return;
+                pouchMatched = true;
+                break;
             }
         }
-        Bukkit.getLogger().info("No matching pouch found.");
+
+        if (!pouchMatched && (itemInHand.getType() == Material.PLAYER_HEAD || itemInHand.getType() == Material.ENDER_CHEST)) {
+            Bukkit.getLogger().info("No matching pouch found. If you're using a pouch as \"ENDER_CHEST\" this message might appear if a user placed on the ground an Ender Chest, you can ignore it as long as your \"ENDER_CHEST\" pouch works.");
+        }
     }
 
     private void removeOrReduceItem(Player player) {
         ItemStack itemInHand = player.getItemInHand();
 
         if (itemInHand.getAmount() > 1) {
-            itemInHand.setAmount(itemInHand.getAmount() - 1);  // Reduce cantitatea cu 1
+            itemInHand.setAmount(itemInHand.getAmount() - 1);
         } else {
-            player.getInventory().removeItem(itemInHand);  // Elimină item-ul dacă este doar 1
+            player.getInventory().removeItem(itemInHand);
         }
-        player.updateInventory();  // Actualizează inventarul
+        player.updateInventory();
     }
 
     private boolean compareSkullTextures(SkullMeta skullMeta1, SkullMeta skullMeta2) {
@@ -267,11 +279,29 @@ public class UseListener implements Listener {
             opening.remove(player.getUniqueId());
 
             boolean success = false;
-            // the payout is wrapped in a try-catch block such that if it fails
-            // the error is logged and payments can be issued manually by operators
             try {
-                pouch.getEconomyType().processPayment(player, payment);
-                success = true;
+                // Verifică dacă economia este PlayerPoints
+                if (pouch.getEconomyType().getPrefix().equalsIgnoreCase("PlayerPoints")) {
+                    // Obține instanța PlayerPointsAPI
+                    PlayerPointsAPI playerPointsAPI = null;
+                    Plugin pluginInstance = Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints");
+
+                    if (pluginInstance instanceof PlayerPoints) {
+                        playerPointsAPI = ((PlayerPoints) pluginInstance).getAPI();
+                    }
+
+                    // Dacă PlayerPointsAPI este disponibil, adaugă puncte jucătorului
+                    if (playerPointsAPI != null) {
+                        playerPointsAPI.give(player.getUniqueId(), (int) payment); // Give points
+                        success = true;
+                    } else {
+                        plugin.getLogger().severe("PlayerPoints API is not available.");
+                    }
+                } else {
+                    // Dacă economia nu este PlayerPoints, procesează plata în mod normal
+                    pouch.getEconomyType().processPayment(player, payment);
+                    success = true;
+                }
             } catch (Throwable t) {
                 if (plugin.getConfig().getBoolean("error-handling.log-failed-transactions", true)) {
                     plugin.getLogger().log(Level.SEVERE, "Failed to process payment from pouch with ID '" + pouch.getId() + "' for player '" + player.getName()

@@ -37,18 +37,19 @@ public class CustomHead {
     public static String getTextureValue(SkullMeta skullMeta) {
         if (skullMeta == null) return null;
 
+        GameProfile profile = null;
         try {
             Field profileField = skullMeta.getClass().getDeclaredField("profile");
             profileField.setAccessible(true);
-            GameProfile profile = (GameProfile) profileField.get(skullMeta);
-
-            if (profile != null && profile.getProperties().containsKey("textures")) {
-                return profile.getProperties().get("textures").iterator().next().getValue();
-            }
+            profile = (GameProfile) profileField.get(skullMeta);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
+            return null;
         }
 
+        if (profile != null && profile.getProperties().containsKey("textures")) {
+            return profile.getProperties().get("textures").iterator().next().getValue();
+        }
         return null;
     }
 

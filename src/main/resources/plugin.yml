@@ -2,8 +2,10 @@ name: ColdPouch
 version: ${version}
 main: dev.padrewin.coldpouch.ColdPouch
 author: padrewin
-softdepend: [Vault, TokenManager, LemonMobCoins]
+softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints]
 api-version: "1.13"
+loadafter:
+  - PlayerPoints
 
 commands:
   coldpouch:
