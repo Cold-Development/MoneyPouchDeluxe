@@ -294,11 +294,9 @@ public class ColdPouch extends JavaPlugin {
             boolean permissionRequired = this.getConfig().getBoolean(path + ".options.permission-required", false);
             List<String> lore = this.getConfig().getStringList(path + ".lore");
 
-            // Configurarea ItemStack-ului
             ItemStack itemStack;
             if (itemType.equalsIgnoreCase("PLAYER_HEAD") && !textureURL.isEmpty()) {
                 itemStack = CustomHead.getCustomSkull(textureURL);
-                // Setarea numelui și lore-ului după aplicarea texturii
                 ItemMeta itemMeta = itemStack.getItemMeta();
                 if (itemMeta != null) {
                     itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', itemName));
@@ -350,18 +348,15 @@ public class ColdPouch extends JavaPlugin {
     }
 
     public ItemStack getItemStack(String path, FileConfiguration config, String itemName, List<String> lore) {
-        // Obține ItemStack-ul folosind itemGetter
         ItemStack itemStack = itemGetter.getItem(path, config, this);
 
         if (itemStack != null && itemStack.getType() != Material.AIR) {
             ItemMeta meta = itemStack.getItemMeta();
 
-            // Setează numele folosind parametrul itemName
             if (itemName != null && !itemName.isEmpty()) {
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', itemName));
             }
 
-            // Setează lore-ul folosind parametrul lore
             if (lore != null && !lore.isEmpty()) {
                 List<String> coloredLore = new ArrayList<>();
                 for (String line : lore) {
@@ -370,10 +365,8 @@ public class ColdPouch extends JavaPlugin {
                 meta.setLore(coloredLore);
             }
 
-            // Aplică metadatele item-ului
             itemStack.setItemMeta(meta);
 
-            // Verifică dacă item-ul este un PLAYER_HEAD și dacă are un texture-url definit
             if (itemStack.getType() == Material.PLAYER_HEAD && config.contains(path + ".texture-url")) {
                 String textureURL = config.getString(path + ".texture-url");
                 itemStack = CustomHead.getCustomSkull(textureURL);

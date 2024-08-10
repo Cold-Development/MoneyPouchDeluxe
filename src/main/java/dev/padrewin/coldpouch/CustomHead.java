@@ -19,12 +19,10 @@ public class CustomHead {
             return skull; // fallback in case of error
         }
 
-        // Crearea unui profil de jucător cu textură personalizată
         GameProfile profile = new GameProfile(UUID.randomUUID(), null);
         profile.getProperties().put("textures", new Property("textures", textureURL));
 
         try {
-            // Accesarea câmpului privat "profile" din SkullMeta și setarea profilului personalizat
             Field profileField = skullMeta.getClass().getDeclaredField("profile");
             profileField.setAccessible(true);
             profileField.set(skullMeta, profile);
