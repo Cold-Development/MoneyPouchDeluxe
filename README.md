@@ -28,7 +28,14 @@
 ### Example `config.yml`
 
 ```yaml
-# Check out the wiki at https://github.com/padrewin or https://github.com/Cold-Development
+#########################################################################################################
+#    Developer; padrewin || Cold Development                                                            #
+#    GitHub; https://github.com/padrewin || https://github.com/Cold-Development                         #
+#    Links: https://colddev.dev || https://discord.colddev.dev                                          #
+#    Textures: https://minecraft-heads.com/custom-heads                                                 #
+#########################################################################################################
+
+# If you don't want to use custom textures such as "PLAYER_HEAD" just replace it with "CHEST" or "ENDER_CHEST" and leave "texture-url:" empty. You have an example below somewhere.
 
 pouches:
   tier:
@@ -49,10 +56,27 @@ pouches:
         - "       &8» &f&l5.000&a&l$ &8- &f&l15.000&a&l$ &8«"
         - ""
 
-    ENDtier1:
+    playerpoints1:
       name: "&8➥ &9&lColdPouches &9✦&7✦✦✦"
       item: "PLAYER_HEAD"
-      texture-url: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzAxZjY4NjM3OTI2YTg2MTRjNjMzNWIyOWYzM2U3M2Y2NDkyMTNlZmFkZTAzMTJmNTk3YzUyZDc2YzQwZjlkMiJ9fX0="
+      texture-url: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTVmZDY3ZDU2ZmZjNTNmYjM2MGExNzg3OWQ5YjUzMzhkNzMzMmQ4ZjEyOTQ5MWE1ZTE3ZThkNmU4YWVhNmMzYSJ9fX0="
+      pricerange:
+        from: 5
+        to: 15
+      options:
+        economytype: "PlayerPoints" # Add PlayerPoints as a valid economy type
+        permission-required: false
+      lore:
+        - ""
+        - "&7&oWhat do you think is in here?"
+        - ""
+        - "       &8» &f&l5&a&l Points &8- &f&l15&a&l Points &8«"
+        - ""
+
+    ENDtier1:
+      name: "&8➥ &9&lColdPouches &9✦&7✦✦✦"
+      item: "ENDER_CHEST"
+      texture-url: ""
       pricerange:
         from: 10000
         to: 25000
@@ -64,38 +88,6 @@ pouches:
         - "&7&oWhat do you think is in here?"
         - ""
         - "       &8» &f&l10.000&a&l$ &8- &f&l25.000&a&l$ &8«"
-        - ""
-    
-    ENDtier2:
-      name: "&8➥ &9&lColdPouches &9✦✦&7✦✦"
-      item: "ENDER_CHEST"
-      pricerange:
-        from: 25000
-        to: 45000
-      options:
-        economytype: "VAULT"
-        permission-required: false      # requires permission "coldpouches.pouches.ENDtier2"
-      lore:
-        - ""
-        - "&7&oWhat do you think is in here?"
-        - ""
-        - "       &8» &f&l25.000&a&l$ &8- &f&l45.000&a&l$ &8«"
-        - ""
-    
-    ENDtier3:
-      name: "&8➥ &9&lColdPouches &9✦✦✦&7✦"
-      item: "ENDER_CHEST"
-      pricerange:
-        from: 40000
-        to: 75000
-      options:
-        economytype: "VAULT"
-        permission-required: false      # requires permission "coldpouches.pouches.ENDtier3"
-      lore:
-        - ""
-        - "&7&oWhat do you think is in here?"
-        - ""
-        - "       &8» &f&l40.000&a&l$ &8- &f&l75.000&a&l$ &8«"
         - ""
 
   # Sound settings (!!!!!!! MUST change for pre-1.9 !!!!!!!)
@@ -165,6 +157,9 @@ economy:
   lemonmobcoins:
     prefix: ""
     suffix: " Mob Coins"
+  playerpoints:
+    prefix: ""
+    suffix: " Points"
 
 # Messages here
 messages:
