@@ -19,7 +19,8 @@ public class CustomHead {
             return skull; // fallback in case of error
         }
 
-        GameProfile profile = new GameProfile(UUID.randomUUID(), null);
+        String shortName = UUID.randomUUID().toString().substring(0, 8);
+        GameProfile profile = new GameProfile(UUID.randomUUID(), shortName);
         profile.getProperties().put("textures", new Property("textures", textureURL));
 
         try {
@@ -35,20 +36,20 @@ public class CustomHead {
     }
 
     public static String getTextureValue(SkullMeta skullMeta) {
-        if (skullMeta == null) return null;
-
-        GameProfile profile = null;
         try {
             Field profileField = skullMeta.getClass().getDeclaredField("profile");
             profileField.setAccessible(true);
-            profile = (GameProfile) profileField.get(skullMeta);
+            GameProfile profile = (GameProfile) profileField.get(skullMeta);
+
+            if (profile != null && profile.getProperties() != null) {
+                for (Property property : profile.getProperties().get("textures")) {
+                    Field valueField = Property.class.getDeclaredField("value");
+                    valueField.setAccessible(true);
+                    return (String) valueField.get(property);
+                }
+            }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
-            return null;
-        }
-
-        if (profile != null && profile.getProperties().containsKey("textures")) {
-            return profile.getProperties().get("textures").iterator().next().getValue();
         }
         return null;
     }

@@ -36,10 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ColdPouch extends JavaPlugin {
     private final ArrayList<Pouch> pouches = new ArrayList<>();
@@ -160,6 +157,7 @@ public class ColdPouch extends JavaPlugin {
                     try (InputStream in = this.getResource("customeconomytype/" + name)) {
                         OutputStream out = new FileOutputStream(file);
                         byte[] buffer = new byte[1024];
+                        assert in != null;
                         int lenght = in.read(buffer);
                         while (lenght != -1) {
                             out.write(buffer, 0, lenght);
@@ -210,8 +208,8 @@ public class ColdPouch extends JavaPlugin {
         } else {
             getLogger().warning("PlayerPoints not found. PlayerPoints support will be disabled.");
         }
-
     }
+
 
     public PlayerPointsAPI getPlayerPointsAPI() {
         return playerPointsAPI;
