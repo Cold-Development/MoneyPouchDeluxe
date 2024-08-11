@@ -1,4 +1,4 @@
-![Static Badge](https://img.shields.io/badge/Version-v1.1-blue?color=799aca)
+![Static Badge](https://img.shields.io/badge/Version-v1.2-blue?color=799aca)
 # MoneyPouchDeluxe
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-blue.svg)<br>
