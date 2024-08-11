@@ -39,8 +39,8 @@
 
 pouches:
   tier:
-    tier1:
-      name: "&8➥ &9&lColdPouches &9✦&7✦✦✦"
+    moneypouch:
+      name: "&8➥ &9&lMoney Pouch &9✦&7✦✦✦"
       item: "PLAYER_HEAD"
       texture-url: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzg2MjJhM2Q1M2NjYzc4NDM2YzBmNjYwMDRjYjRiNzcyOWM0NjZlYTEwMDY1ZTgzOWEwNmI2Mjg4YmZkYTk4NiJ9fX0="
       pricerange:
@@ -56,8 +56,8 @@ pouches:
         - "       &8» &f&l5.000&a&l$ &8- &f&l15.000&a&l$ &8«"
         - ""
 
-    playerpoints1:
-      name: "&8➥ &9&lColdPouches &9✦&7✦✦✦"
+    pointspouch:
+      name: "&8➥ &9&lPoints Pouch &9✦&7✦✦✦"
       item: "PLAYER_HEAD"
       texture-url: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTVmZDY3ZDU2ZmZjNTNmYjM2MGExNzg3OWQ5YjUzMzhkNzMzMmQ4ZjEyOTQ5MWE1ZTE3ZThkNmU4YWVhNmMzYSJ9fX0="
       pricerange:
@@ -73,15 +73,15 @@ pouches:
         - "       &8» &f&l5&a&l Points &8- &f&l15&a&l Points &8«"
         - ""
 
-    ENDtier1:
-      name: "&8➥ &9&lColdPouches &9✦&7✦✦✦"
+    xppouch:
+      name: "&8➥ &9&lXP Pouch &9✦&7✦✦✦"
       item: "ENDER_CHEST"
       texture-url: ""
       pricerange:
-        from: 10000
-        to: 25000
+        from: 10
+        to: 150
       options:
-        economytype: "VAULT"
+        economytype: "XP"
         permission-required: false      # requires permission "coldpouches.pouches.ENDtier1"
       lore:
         - ""
@@ -177,6 +177,7 @@ messages:
   shop-disabled: "&8「&9ColdPouches&8」&7» &fThe shop is disabled."
   no-permission: "&8「&9ColdPouches&8」&7» &fYou do not have permission to open this chest!"
   reloaded: "&8「&9ColdPouches&8」&7» ColdPouch has been reloaded."
+  update_notification: "&8「&9ColdPouches&8」&7» &cA new version &4%new_version% &cwas found &4(your version: %current_version%)&c. &cPlease update: &n%update_link%"
 ```
 
 # 💻 Commands
