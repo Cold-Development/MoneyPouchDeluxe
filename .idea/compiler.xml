@@ -7,7 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="MoneyPouch" />
-        <module name="ColdPouch" />
+        <module name="MoneyPouchDeluxe" />
       </profile>
     </annotationProcessing>
   </component>
