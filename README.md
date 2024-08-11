@@ -1,10 +1,10 @@
 ![Static Badge](https://img.shields.io/badge/Version-v1.1-blue?color=799aca)
-# ColdPouch
+# MoneyPouchDeluxe
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-blue.svg)<br>
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21-green.svg)
 
-**ColdPouch** is a Minecraft plugin that adds customizable pouches to your server. Players can open these pouches to receive rewards, and each pouch can be configured with different textures, names, economies, and more.<br>
+**MoneyPouchDeluxe** is a Minecraft plugin that adds customizable pouches to your server. Players can open these pouches to receive rewards, and each pouch can be configured with different textures, names, economies, and more.<br>
 - Since the good old plugin **MoneyPouch** was not updated since 2021, here you have it! A newer and updated version that will work for 1.13 up to 1.21 versions. Read the features section to see the updates.
 - This is a continuation of the original MoneyPouch plugin by LMBishop which can be found [here](https://github.com/LMBishop/MoneyPouch).
 
@@ -18,7 +18,7 @@
 
 ## 🛠️ Installation
 
-1. **Download the plugin**: Download the latest version of the ColdPouch plugin from [SpigotMC](https://www.spigotmc.org/resources/authors/padrecxsh.2013368/) page.
+1. **Download the plugin**: Download the latest version of the MoneyPouchDeluxe plugin from [SpigotMC](https://www.spigotmc.org/resources/authors/padrecxsh.2013368/) page.
 2. **Install the plugin**: Copy the `.jar` file into your server's `plugins` directory.
 3. **Configure the plugin**: Run the server for the first time to generate the configuration files, then stop it. Edit the `config.yml` file to customize the plugin to your liking.
 4. **Start the server**: Start the server again to load the plugin with your custom settings.
@@ -40,9 +40,9 @@
 pouches:
   tier:
     moneypouch:
-      name: "&8➥ &9&lMoney Pouch &9✦&7✦✦✦"
-      item: "PLAYER_HEAD"
-      texture-url: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzg2MjJhM2Q1M2NjYzc4NDM2YzBmNjYwMDRjYjRiNzcyOWM0NjZlYTEwMDY1ZTgzOWEwNmI2Mjg4YmZkYTk4NiJ9fX0="
+      name: "&8➥ &6&lMoney Pouch &6✦&7✦✦✦"
+      item: "CHEST"
+      texture-url: ""
       pricerange:
         from: 5000
         to: 15000
@@ -57,7 +57,7 @@ pouches:
         - ""
 
     pointspouch:
-      name: "&8➥ &9&lPoints Pouch &9✦&7✦✦✦"
+      name: "&8➥ &6&lPoints Pouch &6✦&7✦✦✦"
       item: "PLAYER_HEAD"
       texture-url: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTVmZDY3ZDU2ZmZjNTNmYjM2MGExNzg3OWQ5YjUzMzhkNzMzMmQ4ZjEyOTQ5MWE1ZTE3ZThkNmU4YWVhNmMzYSJ9fX0="
       pricerange:
@@ -74,7 +74,7 @@ pouches:
         - ""
 
     xppouch:
-      name: "&8➥ &9&lXP Pouch &9✦&7✦✦✦"
+      name: "&8➥ &6&lXP Pouch &6✦&7✦✦✦"
       item: "ENDER_CHEST"
       texture-url: ""
       pricerange:
@@ -82,7 +82,7 @@ pouches:
         to: 150
       options:
         economytype: "XP"
-        permission-required: false      # requires permission "coldpouches.pouches.ENDtier1"
+        permission-required: false      # requires permission "moneypouch.pouches.xppouch"
       lore:
         - ""
         - "&7&oWhat do you think is in here?"
@@ -101,7 +101,7 @@ pouches:
   title:
     speed-in-tick: 10
     subtitle: "&7&oOpening..."
-    obfuscate-colour: "&9"
+    obfuscate-colour: "&6"
     reveal-colour: "&f&l"
     prefix-colour: "&a&l"
     suffix-colour: "&a"
@@ -163,29 +163,29 @@ economy:
 
 # Messages here
 messages:
-  full-inv: "&8「&9ColdPouches&8」&7» &f%player%'s inventory is full."
-  give-item: "&8「&9ColdPouches&8」&7» &fYou have given &9%player%&f %item%&f."
-  receive-item: "&8「&9ColdPouches&8」&7» &fYou have received &9%item%&f."
-  prize-message: "&8「&9ColdPouches&8」&7» &fYou have received &9%prefix%%prize%%suffix%&f!"
-  already-opening: "&8「&9ColdPouches&8」&7» &fPlease wait until you open the first chest!"
-  invalid-pouch: "&8「&9ColdPouches&8」&7» &fThis chest no longer exists! &7(contact an administrator)"
-  inventory-full: "&8「&9ColdPouches&8」&7» &fYour inventory is full!"
-  reward-error: "&8「&9ColdPouches&8」&7» &fThe reward %prefix%%prize%%suffix% &fhas failed."
-  purchase-success: "&8「&9ColdPouches&8」&7» &fYou have purchased %item%&f for &9%prefix%%price%%suffix%&f."
-  purchase-fail: "&8「&9ColdPouches&8」&7» &9You do not have &9%prefix%%price%%suffix%&f."
-  purchase-error: "&8「&9ColdPouches&8」&7» &9Could not complete transaction for %item%&9."
-  shop-disabled: "&8「&9ColdPouches&8」&7» &fThe shop is disabled."
-  no-permission: "&8「&9ColdPouches&8」&7» &fYou do not have permission to open this chest!"
-  reloaded: "&8「&9ColdPouches&8」&7» ColdPouch has been reloaded."
-  update_notification: "&8「&9ColdPouches&8」&7» &cA new version &4%new_version% &cwas found &4(your version: %current_version%)&c. &cPlease update: &n%update_link%"
+  full-inv: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &f%player%'s inventory is full."
+  give-item: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have given &6%player%&f %item%&f."
+  receive-item: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have received &6%item%&f."
+  prize-message: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have received &6%prefix%%prize%%suffix%&f!"
+  already-opening: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fPlease wait until you open the first chest!"
+  invalid-pouch: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fThis chest no longer exists! &7(contact an administrator)"
+  inventory-full: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYour inventory is full!"
+  reward-error: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fThe reward %prefix%%prize%%suffix% &fhas failed."
+  purchase-success: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have purchased %item%&f for &6%prefix%%price%%suffix%&f."
+  purchase-fail: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &6You do not have &6%prefix%%price%%suffix%&f."
+  purchase-error: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &6Could not complete transaction for %item%&6."
+  shop-disabled: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fThe shop is disabled."
+  no-permission: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou do not have permission to open this chest!"
+  reloaded: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» MoneyPouchDeluxe has been reloaded."
+  update_notification: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &cA new version &4%new_version% &cwas found &4(your version: %current_version%)&c. &cPlease update: &n%update_link%"
 ```
 
 # 💻 Commands
 ![image](https://github.com/user-attachments/assets/0d1e74b0-109d-4174-8f92-f0017273a49b)
 
 # ⚠️ Permissions
-- **coldpouches.admin** - Permission to manage the plugin and use admin commands.
-- **coldpouches.pouches.<id>** - Permission required to open a specific type of pouch.
+- **MoneyPouchDeluxees.admin** - Permission to manage the plugin and use admin commands.
+- **MoneyPouchDeluxees.pouches.<id>** - Permission required to open a specific type of pouch.
 
 <br>![image](https://github.com/user-attachments/assets/d90280ff-2742-4345-b504-811ce1f26fa0)
 ![image](https://github.com/user-attachments/assets/7f9f283d-7c0a-44a1-8094-1843b4d179dd)
