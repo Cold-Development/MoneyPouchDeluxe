@@ -18,7 +18,7 @@
 
 ## 🛠️ Installation
 
-1. **Download the plugin**: Download the latest version of the MoneyPouchDeluxe plugin from [SpigotMC](https://www.spigotmc.org/resources/authors/padrecxsh.2013368/) page.
+1. **Download the plugin**: Download the latest version of the MoneyPouchDeluxe plugin from [SpigotMC](https://www.spigotmc.org/resources/moneypouchdeluxe.118795/) page.
 2. **Install the plugin**: Copy the `.jar` file into your server's `plugins` directory.
 3. **Configure the plugin**: Run the server for the first time to generate the configuration files, then stop it. Edit the `config.yml` file to customize the plugin to your liking.
 4. **Start the server**: Start the server again to load the plugin with your custom settings.
@@ -181,13 +181,13 @@ messages:
 ```
 
 # 💻 Commands
-![image](https://github.com/user-attachments/assets/0d1e74b0-109d-4174-8f92-f0017273a49b)
+![image](https://github.com/user-attachments/assets/1e5c4e68-0b45-450d-a777-bdd84bbdc57c)
 
 # ⚠️ Permissions
-- **MoneyPouchDeluxees.admin** - Permission to manage the plugin and use admin commands.
-- **MoneyPouchDeluxees.pouches.<id>** - Permission required to open a specific type of pouch.
+- **moneypouch.admin** - Permission to manage the plugin and use admin commands.
+- **moneypouch.pouches.<id>** - Permission required to open a specific type of pouch.
 
-<br>![image](https://github.com/user-attachments/assets/d90280ff-2742-4345-b504-811ce1f26fa0)
-![image](https://github.com/user-attachments/assets/7f9f283d-7c0a-44a1-8094-1843b4d179dd)
-![image](https://github.com/user-attachments/assets/3df02627-6c76-4d80-8d91-e879937f4ddd)
+<br>![image](https://github.com/user-attachments/assets/280b898b-df87-476b-b208-96505929eea1)
+![image](https://github.com/user-attachments/assets/efca13c8-bb79-4087-a983-8492c443bb3a)<br>
+![image](https://github.com/user-attachments/assets/1e5c4e68-0b45-450d-a777-bdd84bbdc57c)<br>
 ![opening](https://github.com/user-attachments/assets/a7889779-bceb-42c8-b573-8d05e9d49070)
