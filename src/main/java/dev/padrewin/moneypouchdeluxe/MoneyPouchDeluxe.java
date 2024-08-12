@@ -5,6 +5,7 @@ import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeBaseCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeShopCommand;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
 import dev.padrewin.moneypouchdeluxe.Listener.JoinListener;
+import dev.padrewin.moneypouchdeluxe.Listener.ServerLoadListener;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListenerLatest;
 import dev.padrewin.moneypouchdeluxe.Gui.MenuController;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;
@@ -212,9 +213,9 @@ public class MoneyPouchDeluxe extends JavaPlugin {
             getLogger().warning("PlayerPoints not found. PlayerPoints support will be disabled.");
         }
 
-        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
         this.updater = new Updater(this, 118795);
-        this.updater.checkForUpdate();
+        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new ServerLoadListener(this), this);
 
     }
 
