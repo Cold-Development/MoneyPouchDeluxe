@@ -4,6 +4,7 @@ import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeAdminCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeBaseCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeShopCommand;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
+import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
 import dev.padrewin.moneypouchdeluxe.Listener.JoinListener;
 import dev.padrewin.moneypouchdeluxe.Listener.ServerLoadListener;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListenerLatest;
@@ -15,15 +16,14 @@ import dev.padrewin.moneypouchdeluxe.Title.Title_Bukkit;
 import org.apache.commons.lang.StringUtils;
 import org.black_ixx.playerpoints.PlayerPoints;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.command.CommandExecutor;
+import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -51,6 +51,7 @@ public class MoneyPouchDeluxe extends JavaPlugin {
     private MenuController menuController;
     private PlayerPointsAPI playerPointsAPI;
     private Updater updater;
+    private static MoneyPouchDeluxe instance;
 
     /**
      * Gets a registered {@link EconomyType} with a specified ID.
@@ -91,6 +92,10 @@ public class MoneyPouchDeluxe extends JavaPlugin {
         return true;
     }
 
+    public static MoneyPouchDeluxe getInstance() {
+        return instance;
+    }
+
     /**
      * Get a list of all pouches loaded
      *
@@ -102,6 +107,7 @@ public class MoneyPouchDeluxe extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
 
         String pluginName = getDescription().getName();
         getLogger().info("");
@@ -116,6 +122,24 @@ public class MoneyPouchDeluxe extends JavaPlugin {
         getLogger().info("");
 
         this.executeVersionSpecificActions();
+
+        boolean isStackerPluginPresent = isStackerPluginDetected();
+
+        if (!isStackerPluginPresent) {
+            new HologramHandler(this);
+
+            NamespacedKey hologramKey = new NamespacedKey(this, "is_hologram");
+
+            for (World world : Bukkit.getWorlds()) {
+                for (ArmorStand armorStand : world.getEntitiesByClass(ArmorStand.class)) {
+                    if (armorStand.getPersistentDataContainer().has(hologramKey, PersistentDataType.BYTE)) {
+                        armorStand.remove();
+                    }
+                }
+            }
+        } else {
+            getLogger().info("Stacker plugin detected. Holograms will not be created to avoid double holo");
+        }
 
         File directory = new File(String.valueOf(this.getDataFolder()));
         if (!directory.exists() && !directory.isDirectory()) {
@@ -217,6 +241,27 @@ public class MoneyPouchDeluxe extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
         getServer().getPluginManager().registerEvents(new ServerLoadListener(this), this);
 
+        getServer().getScheduler().runTask(this, this::reload);
+
+    }
+
+    private boolean isStackerPluginDetected() {
+        String[] stackerPlugins = {
+                "RoseStacker",
+                "WildStacker",
+                "EpicStacker",
+                "LagAssist",
+                "SimpleStack",
+                "StackMob",
+                "Stacker"
+        };
+
+        for (String pluginName : stackerPlugins) {
+            if (Bukkit.getPluginManager().getPlugin(pluginName) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Updater getUpdater() {
@@ -231,6 +276,15 @@ public class MoneyPouchDeluxe extends JavaPlugin {
     public String getMessage(Message message) {
         return ChatColor.translateAlternateColorCodes('&', this.getConfig().getString("messages."
                 + message.getId(), message.getDef()));
+
+    }
+
+    public String getMessage(Message message, String playerName) {
+        String msg = getMessage(message);
+        if (playerName != null) {
+            msg = msg.replace("%player%", playerName);
+        }
+        return msg;
     }
 
     public Title getTitleHandle() {
@@ -306,8 +360,8 @@ public class MoneyPouchDeluxe extends JavaPlugin {
         }
 
         pouches.clear();
-        for (String s : this.getConfig().getConfigurationSection("pouches.tier").getKeys(false)) {
-            String path = "pouches.tier." + s;
+        for (String pouchName : this.getConfig().getConfigurationSection("pouches.tier").getKeys(false)) {
+            String path = "pouches.tier." + pouchName;
 
             String itemName = this.getConfig().getString(path + ".name", "Unnamed Pouch");
             String itemType = this.getConfig().getString(path + ".item", "CHEST");
@@ -318,41 +372,32 @@ public class MoneyPouchDeluxe extends JavaPlugin {
             boolean permissionRequired = this.getConfig().getBoolean(path + ".options.permission-required", false);
             List<String> lore = this.getConfig().getStringList(path + ".lore");
 
-            ItemStack itemStack;
-            if (itemType.equalsIgnoreCase("PLAYER_HEAD") && !textureURL.isEmpty()) {
-                itemStack = CustomHead.getCustomSkull(textureURL);
-                ItemMeta itemMeta = itemStack.getItemMeta();
-                if (itemMeta != null) {
-                    itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', itemName));
-                    List<String> formattedLore = new ArrayList<>();
-                    for (String line : lore) {
-                        formattedLore.add(ChatColor.translateAlternateColorCodes('&', line));
-                    }
-                    itemMeta.setLore(formattedLore);
-                    itemStack.setItemMeta(itemMeta);
-                }
-            } else {
-                itemStack = getItemStack(path, this.getConfig(), itemName, lore);
-            }
+            String pouchId = pouchName; // folosim pouchName (moneypouch, pointspouch etc.) ca pouchId
+
+            ItemStack itemStack = getItemStack(path, this.getConfig(), itemName, lore);
 
             EconomyType economyType = getEconomyType(economyTypeId);
             if (economyType == null) {
                 economyType = getEconomyType("invalid");
-                super.getLogger().warning("Pouch with ID " + s + " tried to use an invalid economy type '" + economyTypeId + "'.");
+                super.getLogger().warning("Pouch with ID " + pouchName + " tried to use an invalid economy type '" + economyTypeId + "'.");
             }
 
-            boolean purchasable = this.getConfig().contains("shop.purchasable-items." + s);
+            boolean purchasable = this.getConfig().contains("shop.purchasable-items." + pouchName);
+            long price = 0;
+            EconomyType purchaseEconomy = null;
+            ItemStack shopIs = null;
+
             if (purchasable) {
-                long price = this.getConfig().getLong("shop.purchasable-items." + s + ".price", 0);
-                String purchaseEconomyId = this.getConfig().getString("shop.purchasable-items." + s + ".currency", "VAULT");
-                EconomyType purchaseEconomy = getEconomyType(purchaseEconomyId);
+                price = this.getConfig().getLong("shop.purchasable-items." + pouchName + ".price", 0);
+                String purchaseEconomyId = this.getConfig().getString("shop.purchasable-items." + pouchName + ".currency", "VAULT");
+                purchaseEconomy = getEconomyType(purchaseEconomyId);
 
                 if (purchaseEconomy == null) {
                     purchaseEconomy = getEconomyType("invalid");
-                    super.getLogger().warning("Pouch with ID " + s + " tried to use an invalid currency (for /mpshop) economy type '" + purchaseEconomyId + "'.");
+                    super.getLogger().warning("Pouch with ID " + pouchName + " tried to use an invalid currency (for /mpshop) economy type '" + purchaseEconomyId + "'.");
                 }
 
-                ItemStack shopIs = itemStack.clone();
+                shopIs = itemStack.clone();
                 ItemMeta shopIsm = shopIs.getItemMeta();
                 List<String> shopIsLore = new ArrayList<>(lore);
                 for (String shopLore : this.getConfig().getStringList("shop.append-to-lore")) {
@@ -363,11 +408,11 @@ public class MoneyPouchDeluxe extends JavaPlugin {
                 }
                 shopIsm.setLore(shopIsLore);
                 shopIs.setItemMeta(shopIsm);
-
-                pouches.add(new Pouch(s.replace(" ", "_"), priceMin, priceMax, itemStack, economyType, permissionRequired, purchasable, purchaseEconomy, price, shopIs));
-            } else {
-                pouches.add(new Pouch(s.replace(" ", "_"), priceMin, priceMax, itemStack, economyType, permissionRequired));
             }
+
+            Pouch pouch = new Pouch(pouchId, priceMin, priceMax, itemStack, economyType, permissionRequired, purchasable, purchaseEconomy, price, shopIs, pouchId);
+            pouch.initializeUUID();
+            pouches.add(pouch);
         }
     }
 
@@ -381,9 +426,14 @@ public class MoneyPouchDeluxe extends JavaPlugin {
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', itemName));
             }
 
+            long rangeFrom = config.getLong(path + ".pricerange.from");
+            long rangeTo = config.getLong(path + ".pricerange.to");
+
             if (lore != null && !lore.isEmpty()) {
                 List<String> coloredLore = new ArrayList<>();
                 for (String line : lore) {
+                    line = line.replace("%pricerange_from%", String.format("%,d", rangeFrom));
+                    line = line.replace("%pricerange_to%", String.format("%,d", rangeTo));
                     coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
                 }
                 meta.setLore(coloredLore);
@@ -411,6 +461,7 @@ public class MoneyPouchDeluxe extends JavaPlugin {
     public enum Message {
 
         FULL_INV("full-inv", "&c%player%'s inventory is full!"),
+        PLAYER_FULL_INV("player-full-inv", "&cYour inventory is full. A pouch was dropped near you. Make sure to pick it up."),
         GIVE_ITEM("give-item", "&6Given &e%player% %item%&6."),
         RECEIVE_ITEM("receive-item", "&6You have been given %item%&6."),
         PRIZE_MESSAGE("prize-message", "&6You have received &c%prefix%%prize%%suffix%&6!"),
@@ -422,7 +473,8 @@ public class MoneyPouchDeluxe extends JavaPlugin {
         PURCHASE_FAIL("purchase-fail", "&cYou do not have &c%prefix%%price%%suffix%&6."),
         PURCHASE_ERROR("purchase-ERROR", "&cCould not complete transaction for %item%&c."),
         SHOP_DISABLED("shop-disabled", "&cThe pouch shop is disabled."),
-        NO_PERMISSION("no-permission", "&cYou cannot open this pouch.");
+        NO_PERMISSION("no-permission", "&cYou cannot open this pouch."),
+        KILL_HOLO("kill-holo", "Pouch hologram removed.");
 
         private String id;
         private String def; // (default message if undefined)
@@ -440,5 +492,4 @@ public class MoneyPouchDeluxe extends JavaPlugin {
             return def;
         }
     }
-
 }

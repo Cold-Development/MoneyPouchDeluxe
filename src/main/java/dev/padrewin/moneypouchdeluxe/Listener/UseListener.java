@@ -2,17 +2,13 @@ package dev.padrewin.moneypouchdeluxe.Listener;
 
 import org.black_ixx.playerpoints.PlayerPoints;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
-import org.bukkit.Bukkit;
+import org.bukkit.*;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
-import dev.padrewin.moneypouchdeluxe.CustomHead;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import dev.padrewin.moneypouchdeluxe.EconomyType.InvalidEconomyType;
 import dev.padrewin.moneypouchdeluxe.Title.Title_Other;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
@@ -20,7 +16,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -63,35 +61,31 @@ public class UseListener implements Listener {
 
         boolean pouchMatched = false;
 
-        for (Pouch p : plugin.getPouches()) {
-            ItemStack pouchItem = p.getItemStack();
+        String itemPouchId = getPouchId(itemInHand);
 
-            if (itemInHand.getType() == Material.PLAYER_HEAD && pouchItem.getType() == Material.PLAYER_HEAD) {
-                SkullMeta skullMetaInHand = (SkullMeta) itemInHand.getItemMeta();
-                SkullMeta skullMetaPouch = (SkullMeta) pouchItem.getItemMeta();
+        for (Pouch pouch : plugin.getPouches()) {
+            String pouchId = pouch.getId();
 
-                String textureInHand = CustomHead.getTextureValue(skullMetaInHand);
-                String texturePouch = CustomHead.getTextureValue(skullMetaPouch);
-
-                if (textureInHand != null && textureInHand.equals(texturePouch)) {
-                    event.setCancelled(true);
-                    usePouch(player, p);
-                    removeOrReduceItem(player);
-                    pouchMatched = true;
-                    break;
-                }
-            } else if (pouchItem.isSimilar(itemInHand)) {
+            if (itemPouchId != null && itemPouchId.equals(pouchId)) {
                 event.setCancelled(true);
-                usePouch(player, p);
+                usePouch(player, pouch);
                 removeOrReduceItem(player);
                 pouchMatched = true;
                 break;
             }
         }
 
-        if (!pouchMatched && (itemInHand.getType() == Material.PLAYER_HEAD || itemInHand.getType() == Material.ENDER_CHEST)) {
-            Bukkit.getLogger().info("No matching pouch found. If you're using a pouch as \"ENDER_CHEST\" this message might appear if a user placed on the ground an Ender Chest, you can ignore it as long as your \"ENDER_CHEST\" pouch works.");
+        if (!pouchMatched) {
+            //Bukkit.getLogger().info("No matching pouch found.");
         }
+    }
+
+    private String getPouchId(ItemStack item) {
+        if (item.hasItemMeta()) {
+            ItemMeta meta = item.getItemMeta();
+            return meta.getPersistentDataContainer().get(new NamespacedKey(MoneyPouchDeluxe.getInstance(), "pouch-id"), PersistentDataType.STRING);
+        }
+        return null;
     }
 
     private void removeOrReduceItem(Player player) {
@@ -290,7 +284,6 @@ public class UseListener implements Listener {
                         playerPointsAPI = ((PlayerPoints) pluginInstance).getAPI();
                     }
 
-                    // Dacă PlayerPointsAPI este disponibil, adaugă puncte jucătorului
                     if (playerPointsAPI != null) {
                         playerPointsAPI.give(player.getUniqueId(), (int) payment); // Give points
                         success = true;
@@ -298,7 +291,6 @@ public class UseListener implements Listener {
                         plugin.getLogger().severe("PlayerPoints API is not available.");
                     }
                 } else {
-                    // Dacă economia nu este PlayerPoints, procesează plata în mod normal
                     pouch.getEconomyType().processPayment(player, payment);
                     success = true;
                 }

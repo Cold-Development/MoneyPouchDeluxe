@@ -1,11 +1,16 @@
 package dev.padrewin.moneypouchdeluxe;
 
 import dev.padrewin.moneypouchdeluxe.EconomyType.EconomyType;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+
+import java.util.UUID;
 
 public class Pouch {
 
-    private final String id;
+    private final String id; // acest id este moneypouch, pointspouch etc.
     private final long minRange;
     private final long maxRange;
     private final ItemStack itemStack;
@@ -15,14 +20,11 @@ public class Pouch {
     private final long purchasePrice;
     private final ItemStack shopItemStack;
     private final boolean permissionRequired;
+    private UUID uuid;
 
-    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, boolean permissionRequired) {
+    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, boolean permissionRequired, String pouchId) {
         this.id = id;
-        if (minRange >= maxRange) {
-            this.minRange = maxRange - 1;
-        } else {
-            this.minRange = minRange;
-        }
+        this.minRange = minRange >= maxRange ? maxRange - 1 : minRange;
         this.maxRange = maxRange;
         this.itemStack = itemStack;
         this.economyType = economyType;
@@ -31,16 +33,13 @@ public class Pouch {
         this.purchaseCurrency = null;
         this.purchasePrice = 0;
         this.shopItemStack = null;
+        applyUUIDToItemStack(pouchId);
     }
 
     public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, boolean permissionRequired,
-                 boolean purchasable, EconomyType purchaseCurrency, long purchasePrice, ItemStack shopItemStack) {
+                 boolean purchasable, EconomyType purchaseCurrency, long purchasePrice, ItemStack shopItemStack, String pouchId) {
         this.id = id;
-        if (minRange >= maxRange) {
-            this.minRange = maxRange - 1;
-        } else {
-            this.minRange = minRange;
-        }
+        this.minRange = minRange >= maxRange ? maxRange - 1 : minRange;
         this.maxRange = maxRange;
         this.itemStack = itemStack;
         this.economyType = economyType;
@@ -49,95 +48,66 @@ public class Pouch {
         this.purchaseCurrency = purchaseCurrency;
         this.purchasePrice = purchasePrice;
         this.shopItemStack = shopItemStack;
+        applyUUIDToItemStack(pouchId);
     }
 
-    /**
-     * Boolean of whether or not a permission is required to open the pouch.
-     *
-     * @return boolean
-     */
-    public boolean isPermissionRequired() {
-        return permissionRequired;
-    }
-
-    /**
-     * Boolean of whether or not the pouch can be bought from the MoneyPouchDeluxe shop.
-     *
-     * @return boolean
-     */
-    public boolean isPurchasable() {
-        return purchasable;
-    }
-
-    /**
-     * Get the {@link EconomyType} of the currency used to purchase the pouch from the MoneyPouchDeluxe shop.
-     * Returns {@code null} if no currency is specified.
-     *
-     * @return {@link EconomyType}
-     */
-    public EconomyType getPurchaseCurrency() {
-        return purchaseCurrency;
-    }
-
-    /**
-     * Get the price of the pouch in the MoneyPouchDeluxe shop.
-     *
-     * @return long
-     */
-    public long getPurchasePrice() {
-        return purchasePrice;
-    }
-
-    /**
-     * Get the unique ID of the pouch.
-     *
-     * @return String
-     */
     public String getId() {
         return id;
     }
 
-    /**
-     * Get the lower bound of the possible rewards from this pouch.
-     *
-     * @return long
-     */
+    public void initializeUUID() {
+        this.uuid = UUID.randomUUID();
+        applyUUIDToItemStack(id);
+    }
+
+    private void applyUUIDToItemStack(String pouchId) {
+        if (MoneyPouchDeluxe.getInstance() == null) {
+            throw new IllegalStateException("MoneyPouchDeluxe instance is not initialized.");
+        }
+
+        ItemMeta meta = this.itemStack.getItemMeta();
+        if (meta != null) {
+            meta.getPersistentDataContainer().set(new NamespacedKey(MoneyPouchDeluxe.getInstance(), "pouch-id"), PersistentDataType.STRING, pouchId);
+            this.itemStack.setItemMeta(meta);
+        }
+    }
+
+    public UUID getUUID() {
+        return uuid;
+    }
+
+    public boolean isPermissionRequired() {
+        return permissionRequired;
+    }
+
+    public boolean isPurchasable() {
+        return purchasable;
+    }
+
+    public EconomyType getPurchaseCurrency() {
+        return purchaseCurrency;
+    }
+
+    public long getPurchasePrice() {
+        return purchasePrice;
+    }
+
     public long getMinRange() {
         return minRange;
     }
 
-    /**
-     * Get the upper bound of the possible rewards from this pouch.
-     *
-     * @return long
-     */
     public long getMaxRange() {
         return maxRange;
     }
 
-    /**
-     * Get the {@link ItemStack} used to represent this pouch in the player's inventory.
-     *
-     * @return {@link ItemStack}
-     */
     public ItemStack getItemStack() {
         return itemStack;
     }
 
-    /**
-     * Get the {@link ItemStack} used to represent this pouch in the MoneyPouchDeluxe shop.
-     *
-     * @return {@link ItemStack}
-     */
     public ItemStack getShopItemStack() {
         return shopItemStack;
     }
 
-    /**
-     * Get the {@link EconomyType} of the currency used as a reward from this pouch.
-     *
-     * @return {@link EconomyType}
-     */
     public EconomyType getEconomyType() {
         return economyType;
     }
