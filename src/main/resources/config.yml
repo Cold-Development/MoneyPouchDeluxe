@@ -7,6 +7,7 @@
 
 # If you don't want to use custom textures such as "PLAYER_HEAD" just replace it with "CHEST" or "ENDER_CHEST" and leave "texture-url:" empty. You have an example below somewhere.
 # You can use placeholders in the pouch's lore. %pricerange_from% and %pricerange_to%
+# economytypes can be: VAULT (money), XP, PlayerPoints, LemonMobCoins, owncustomname (name of defined custom pouch)
 
 pouches:
   tier:
