@@ -1,5 +1,5 @@
 ![image](https://imgur.com/FRoQbVI.png)<br>
-![Static Badge](https://img.shields.io/badge/Version-v1.2-blue?color=799aca)
+![Static Badge](https://img.shields.io/badge/Version-v1.3-blue?color=799aca)
 # MoneyPouchDeluxe
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-blue.svg)<br>
@@ -37,6 +37,8 @@
 #########################################################################################################
 
 # If you don't want to use custom textures such as "PLAYER_HEAD" just replace it with "CHEST" or "ENDER_CHEST" and leave "texture-url:" empty. You have an example below somewhere.
+# You can use placeholders in the pouch's lore. %pricerange_from% and %pricerange_to%
+# economytypes can be: VAULT (money), XP, PlayerPoints, LemonMobCoins, owncustomname (name of defined custom pouch)
 
 pouches:
   tier:
@@ -52,9 +54,9 @@ pouches:
         permission-required: false
       lore:
         - ""
-        - "&7&oWhat do you think is in here?"
+        - "&7&oHow much money do you think is in here?"
         - ""
-        - "       &8» &f&l5.000&a&l$ &8- &f&l15.000&a&l$ &8«"
+        - "       &8» &f&l%pricerange_from%&a&l$ &8- &f&l%pricerange_to%&a&l$ &8«"
         - ""
 
     pointspouch:
@@ -69,7 +71,7 @@ pouches:
         permission-required: false
       lore:
         - ""
-        - "&7&oWhat do you think is in here?"
+        - "&7&oHow much points do you think is in here?"
         - ""
         - "       &8» &f&l5&a&l Points &8- &f&l15&a&l Points &8«"
         - ""
@@ -86,9 +88,9 @@ pouches:
         permission-required: false      # requires permission "moneypouch.pouches.xppouch"
       lore:
         - ""
-        - "&7&oWhat do you think is in here?"
+        - "&7&oHow much XP do you think is in here?"
         - ""
-        - "       &8» &f&l10.000&a&l$ &8- &f&l25.000&a&l$ &8«"
+        - "       &8» &f&l10&a&lXP &8- &f&l150&a&lXP &8«"
         - ""
 
   # Sound settings (!!!!!!! MUST change for pre-1.9 !!!!!!!)
@@ -164,7 +166,8 @@ economy:
 
 # Messages here
 messages:
-  full-inv: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &f%player%'s inventory is full."
+  full-inv: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &6%player%'s &finventory is &cfull&f. The pouch was dropped near the player."
+  player-full-inv: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYour inventory is &cfull&f. A pouch was dropped near you. Make sure to pick it up."
   give-item: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have given &6%player%&f %item%&f."
   receive-item: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have received &6%item%&f."
   prize-message: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou have received &6%prefix%%prize%%suffix%&f!"
@@ -178,7 +181,8 @@ messages:
   shop-disabled: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fThe shop is disabled."
   no-permission: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &fYou do not have permission to open this chest!"
   reloaded: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» MoneyPouchDeluxe has been reloaded."
-  update_notification: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &cA new version &4%new_version% &cwas found &4(your version: %current_version%)&c. &cPlease update: &n%update_link%"
+  update_notification: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &cA new version &4%latest_version% &cwas found &4(your version: %current_version%)&c. &cPlease update: &n%update_link%"
+  kill-holo: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» Pouch hologram removed."
 ```
 
 # 💻 Commands
