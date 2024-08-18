@@ -19,22 +19,28 @@ public class JoinListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.getUpdater().checkForUpdate().thenAccept(updateAvailable -> {
-            if (updateAvailable) {
-                String currentVersion = plugin.getDescription().getVersion().trim();
-                String latestVersion = plugin.getUpdater().getReturnedVersion().trim();
-                String updateLink = plugin.getUpdater().getUpdateLink();
+        if (event.getPlayer().hasPermission("moneypouch.admin")) {
+            plugin.getUpdater().checkForUpdate().thenAccept(updateAvailable -> {
+                if (updateAvailable) {
+                    String currentVersion = plugin.getDescription().getVersion().trim();
+                    String latestVersion = plugin.getUpdater().getReturnedVersion().trim();
+                    String updateLink = plugin.getUpdater().getUpdateLink();
 
-                String updateMessage = Objects.requireNonNull(plugin.getConfig().getString("messages.update_notification"))
-                        .replace("%latest_version%", latestVersion)
-                        .replace("%current_version%", currentVersion)
-                        .replace("%update_link%", updateLink);
+                    if (!currentVersion.startsWith("v")) {
+                        currentVersion = "v" + currentVersion;
+                    }
 
-                String finalUpdateMessage = ChatColor.translateAlternateColorCodes('&', updateMessage);
-                Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
-                    event.getPlayer().sendMessage(finalUpdateMessage);
-                }, 50L);
-            }
-        });
+                    String updateMessage = Objects.requireNonNull(plugin.getConfig().getString("messages.update_notification"))
+                            .replace("%latest_version%", latestVersion)
+                            .replace("%current_version%", currentVersion)
+                            .replace("%update_link%", updateLink);
+
+                    String finalUpdateMessage = ChatColor.translateAlternateColorCodes('&', updateMessage);
+                    Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+                        event.getPlayer().sendMessage(finalUpdateMessage);
+                    }, 50L);
+                }
+            });
+        }
     }
 }
