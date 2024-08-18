@@ -1,12 +1,11 @@
 ![image](https://imgur.com/FRoQbVI.png)<br>
-![Static Badge](https://img.shields.io/badge/Version-v1.3-blue?color=799aca)
-# MoneyPouchDeluxe
-
-![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-blue.svg)<br>
+![Static Badge](https://img.shields.io/badge/Version-v1.3.1-blue?color=799aca)
+### Supported versions:
+![Minecraft](https://img.shields.io/badge/Minecraft-1.20-blue.svg)<br>
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21-green.svg)
+# 💰 MoneyPouchDeluxe
 
 **MoneyPouchDeluxe** is a Minecraft plugin that adds customizable pouches to your server. Players can open these pouches to receive rewards, and each pouch can be configured with different textures, names, economies, and more.<br>
-- Since the good old plugin **MoneyPouch** was not updated since 2021, here you have it! A newer and updated version that will work for 1.13 up to 1.21 versions. Read the features section to see the updates.
 - This is a continuation of the original MoneyPouch plugin by LMBishop which can be found [here](https://github.com/LMBishop/MoneyPouch).
 
 ## 📦 Features
@@ -196,3 +195,6 @@ messages:
 ![image](https://github.com/user-attachments/assets/efca13c8-bb79-4087-a983-8492c443bb3a)<br>
 ![image](https://github.com/user-attachments/assets/1e5c4e68-0b45-450d-a777-bdd84bbdc57c)<br>
 ![opening](https://github.com/user-attachments/assets/a7889779-bceb-42c8-b573-8d05e9d49070)
+
+#### Downloads:
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/Cold-Development/MoneyPouchDeluxe/total?color=green)
