@@ -1,5 +1,5 @@
 ![image](https://imgur.com/FRoQbVI.png)<br>
-![Static Badge](https://img.shields.io/badge/Version-v1.3.1-blue?color=799aca)
+![Static Badge](https://img.shields.io/badge/Version-v1.3.2-blue?color=799aca)
 ### Supported versions:
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.20-blue.svg)<br>
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21-green.svg)
