@@ -1,0 +1,29 @@
+name: MoneyPouchDeluxe
+version: ${version}
+main: dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe
+author: padrewin
+softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints]
+api-version: "1.13"
+loadafter:
+  - PlayerPoints
+
+commands:
+  moneypouch:
+    description: Main command for MoneyPouchDeluxe
+    usage: /coldpouch | /moneypouch
+    permission: moneypouch.admin
+    aliases: [cp, mp]
+  moneypouchshop:
+    description: Shop command for MoneyPouchDeluxe
+    usage: /moneypouchshop | /coldpouchshop
+    permission: moneypouch.shop
+    aliases: [cpshop, mpshop]
+  moneypouchadmin:
+    description: Admin command for MoneyPouchDeluxe
+    usage: /coldpouchshop | /moneypouchshop
+    permission: moneypouch.admin
+    aliases: [cpa, mpa]
+
+permissions:
+  moneypouch.admin:
+    description: Permission for the base command
