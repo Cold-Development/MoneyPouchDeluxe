@@ -2,11 +2,9 @@ name: MoneyPouchDeluxe
 version: ${version}
 main: dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe
 author: padrewin
-softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints]
+website: 'https://github.com/Cold-Development/MoneyPouchDeluxe'
+softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints, PremiumPoints]
 api-version: "1.13"
-loadafter:
-  - PlayerPoints
-
 commands:
   moneypouch:
     description: Main command for MoneyPouchDeluxe

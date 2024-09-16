@@ -16,6 +16,7 @@ import org.bukkit.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabCompleter {
@@ -24,25 +25,6 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
 
     public MoneyPouchDeluxeBaseCommand(MoneyPouchDeluxe plugin) {
         this.plugin = plugin;
-    }
-
-    private static class InventoryChecker {
-        private final Player player;
-
-        public InventoryChecker(Player player) {
-            this.player = player;
-        }
-
-        public int getEmptyInventorySlots() {
-            int emptySlots = 0;
-            ItemStack[] contents = player.getInventory().getContents();
-            for (int i = 0; i < 36; i++) {
-                if (contents[i] == null) {
-                    emptySlots++;
-                }
-            }
-            return emptySlots;
-        }
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -86,32 +68,42 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
                 return true;
             }
 
-            InventoryChecker inventoryChecker = new InventoryChecker(target);
-            int emptySlots = inventoryChecker.getEmptyInventorySlots();
-            if (emptySlots >= amount) {
-                target.getInventory().addItem(pouch.getItemStack());
-            } else {
+            // Creăm o copie a ItemStack-ului cu cantitatea dorită
+            ItemStack stackToAdd = pouch.getItemStack().clone();
+            stackToAdd.setAmount(amount);
 
-                boolean isStackerPluginPresent = isStackerPluginDetected();
+            // Încercăm să adăugăm itemele în inventar
+            HashMap<Integer, ItemStack> leftover = target.getInventory().addItem(stackToAdd);
 
-                for (int i = 0; i < amount; i++) {
-                    ItemStack pouchItem = pouch.getItemStack();
-                    Item droppedItem = target.getWorld().dropItemNaturally(target.getLocation(), pouchItem);
-
-
-                    if (!isStackerPluginPresent) {
-                        HologramHandler.createHologram(droppedItem, plugin);
-                    }
-                }
-
-                String fullInventoryMessage = plugin.getMessage(MoneyPouchDeluxe.Message.FULL_INV)
-                        .replace("%player%", target.getName());
-                sender.sendMessage(fullInventoryMessage);
-
-                String fullInventoryPlayerMessage = plugin.getMessage(MoneyPouchDeluxe.Message.PLAYER_FULL_INV);
-                target.sendMessage(fullInventoryPlayerMessage);
+            int added = amount;
+            for (ItemStack item : leftover.values()) {
+                added -= item.getAmount();
             }
 
+            if (!leftover.isEmpty()) {
+                int totalLeftover = 0;
+                for (ItemStack item : leftover.values()) {
+                    totalLeftover += item.getAmount();
+                }
+
+                for (ItemStack item : leftover.values()) {
+                    Item droppedItem = target.getWorld().dropItemNaturally(target.getLocation(), item);
+
+                    if (!isStackerPluginDetected()) {
+                        HologramHandler.createHologram(droppedItem, plugin);
+                    }
+
+                    // Setăm pickup delay pentru a preveni preluarea imediată
+                    droppedItem.setPickupDelay(40); // 2 secunde delay
+                    droppedItem.setOwner(null); // Prevenim preluarea instantă a itemelor de către owner
+                }
+
+                sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.FULL_INV)
+                        .replace("%player%", target.getName()));
+                target.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PLAYER_FULL_INV));
+            }
+
+            // Mesaje pentru jucător
             sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
                     .replace("%player%", target.getName())
                     .replace("%item%", pouch.getItemStack().getItemMeta().getDisplayName()));
@@ -125,6 +117,7 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
             return true;
         }
 
+        // Mesaje de utilizare
         sender.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "MoneyPouchDeluxe (ver " + plugin.getDescription().getVersion() + ")");
         sender.sendMessage(ChatColor.GRAY + "<> = required, [] = optional");
         sender.sendMessage(ChatColor.YELLOW + "/mp | /cp :" + ChatColor.GRAY + " view this menu");
@@ -154,6 +147,7 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
         }
         return null;
     }
+
     private boolean isStackerPluginDetected() {
         String[] stackerPlugins = {
                 "RoseStacker",

@@ -6,50 +6,72 @@
 
   <groupId>dev.padrewin</groupId>
   <artifactId>MoneyPouchDeluxe</artifactId>
-  <version>1.3.2</version>
+  <version>1.3.3</version>
   <packaging>jar</packaging>
 
   <name>MoneyPouchDeluxe</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+    </properties>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-  </build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version> <!-- Actualizează la o versiune mai recentă -->
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version> <!-- Actualizează la o versiune mai recentă -->
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>dev.padrewin.coldplugin</pattern>
+                                    <shadedPattern>dev.padrewin.moneypouchdeluxe.libs.coldplugin</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
   <repositories>
+      <repository>
+          <id>com.github.coldplugin</id>
+          <url>https://maven.pkg.github.com/Cold-Development/ColdDev</url>
+      </repository>
+      <repository>
+          <id>com.github.padrewin</id>
+          <url>https://maven.pkg.github.com/padrewin/PremiumPoints</url>
+      </repository>
       <repository>
           <id>sonatype</id>
           <url>https://oss.sonatype.org/content/groups/public/</url>
@@ -78,6 +100,24 @@
 
   <dependencies>
       <dependency>
+          <groupId>dev.padrewin</groupId>
+          <artifactId>coldplugin</artifactId>
+          <version>1.3.2</version>
+          <scope>compile</scope>
+      </dependency>
+      <dependency>
+          <groupId>dev.padrewin</groupId>
+          <artifactId>premiumpoints</artifactId>
+          <version>1.3.2</version>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.black_ixx</groupId>
+          <artifactId>playerpoints</artifactId>
+          <version>3.2.7</version>
+          <scope>provided</scope>
+      </dependency>
+      <dependency>
           <groupId>org.spigotmc</groupId>
           <artifactId>spigot-api</artifactId>
           <version>1.20.1-R0.1-SNAPSHOT</version>
@@ -96,10 +136,10 @@
           <scope>provided</scope>
       </dependency>
       <dependency>
-          <groupId>org.black_ixx</groupId>
-          <artifactId>playerpoints</artifactId>
-          <version>3.2.7</version>
-          <scope>provided</scope>
+          <groupId>org.jetbrains</groupId>
+          <artifactId>annotations</artifactId>
+          <version>24.1.0</version>
+          <scope>compile</scope>
       </dependency>
   </dependencies>
 </project>

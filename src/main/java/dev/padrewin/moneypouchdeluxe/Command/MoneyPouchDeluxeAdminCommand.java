@@ -7,10 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.command.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -37,11 +34,11 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
                             ChatColor.DARK_GRAY + "/" + ChatColor.YELLOW + pouch.getEconomyType().getSuffix() + "])");
                 }
                 return true;
-            } else if (args[0].equals("economy") || args[0].equals("economies") ) {
+            } else if (args[0].equals("economy") || args[0].equals("economies")) {
                 for (Map.Entry<String, EconomyType> economyTypeEntry : plugin.getEconomyTypes().entrySet()) {
                     sender.sendMessage(ChatColor.GOLD + economyTypeEntry.getKey() + " " + ChatColor.YELLOW
                             + economyTypeEntry.getValue().toString() + " [" + economyTypeEntry.getValue().getPrefix() +
-                            ChatColor.DARK_GRAY + "/" + ChatColor.YELLOW +  economyTypeEntry.getValue().getSuffix() + "])");
+                            ChatColor.DARK_GRAY + "/" + ChatColor.YELLOW + economyTypeEntry.getValue().getSuffix() + "])");
                 }
                 return true;
             } else if (args[0].equals("reload")) {
