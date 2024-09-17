@@ -57,6 +57,8 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     private MenuController menuController;
     private PlayerPointsAPI playerPointsAPI;
     private static MoneyPouchDeluxe instance;
+    private boolean pointsSetupDone = false;
+    private boolean pointsHooked = false;
 
     public MoneyPouchDeluxe() {
         super("Cold-Development", "MoneyPouchDeluxe", 23381, null, null, null);
@@ -120,30 +122,14 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     @Override
     public void enable() {
+        setupEconomy();
+        setupPointsEconomy();
         getManager(PluginUpdateManager.class);
         instance = this;
         menuController = new MenuController(this);
         super.getServer().getPluginManager().registerEvents(menuController, this);
         Objects.requireNonNull(this.getCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this));
         getServer().getPluginManager().registerEvents(new ServerLoadListener(this), this);
-
-        if (getEconomyType("playerpoints") == null && Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints") != null) {
-            playerPointsAPI = PlayerPoints.getInstance().getAPI();
-            registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
-                    this.getConfig().getString("economy.playerpoints.prefix", ""),
-                    this.getConfig().getString("economy.playerpoints.suffix", " Points"))
-            );
-            getLogger().info("PlayerPoints hook successfully!");
-        } else if (getEconomyType("premiumpoints") == null && Bukkit.getServer().getPluginManager().getPlugin("PremiumPoints") != null) {
-            playerPointsAPI = PremiumPoints.getInstance().getAPI();
-            registerEconomyType("premiumpoints", new PlayerPointsEconomyType(this,
-                    this.getConfig().getString("economy.premiumpoints.prefix", ""),
-                    this.getConfig().getString("economy.premiumpoints.suffix", " Premium Points"))
-            );
-            getLogger().info("PremiumPoints hook successfully!");
-        } else {
-            getLogger().warning("PlayerPoints or PremiumPoints not found. Points support will be disabled.");
-        }
 
         if (getEconomyType("vault") == null && setupEconomy()) {
             registerEconomyType("vault", new VaultEconomyType(this,
@@ -159,7 +145,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         Objects.requireNonNull(getServer().getPluginCommand("moneypouchshop")).setExecutor(new MoneyPouchDeluxeShopCommand(this));
         Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this));
 
-        // Mesajul de pornire a pluginului
         String pluginName = getDescription().getName();
         getLogger().info("");
         getLogger().info("  ____ ___  _     ____  ");
@@ -221,7 +206,61 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             }
         }
 
-        this.reload();
+    }
+
+    private void setupPointsEconomy() {
+        if (pointsSetupDone) {
+            return;
+        }
+
+        pointsHooked = false;
+
+        if (Bukkit.getServer().getPluginManager().getPlugin("PremiumPoints") != null && Bukkit.getServer().getPluginManager().getPlugin("PremiumPoints").isEnabled()) {
+            if (getEconomyType("playerpoints") == null) {
+                try {
+                    Class<?> premiumPointsClass = Class.forName("dev.padrewin.premiumpoints.PremiumPoints");
+                    Object premiumPointsInstance = premiumPointsClass.getMethod("getInstance").invoke(null);
+                    Object api = premiumPointsClass.getMethod("getAPI").invoke(premiumPointsInstance);
+
+                    playerPointsAPI = (PlayerPointsAPI) api;
+                    registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
+                            this.getConfig().getString("economy.premiumpoints.prefix", ""),
+                            this.getConfig().getString("economy.premiumpoints.suffix", " Points"))
+                    );
+                    getLogger().info("PremiumPoints hook successfully!");
+                    pointsHooked = true;
+                } catch (Exception e) {
+                    //getLogger().severe("Failed to hook into PremiumPoints: " + e.getMessage());
+                }
+            }
+        }
+
+        if (!pointsHooked && Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints") != null) {
+            if (getEconomyType("playerpoints") == null) {
+                try {
+                    Class<?> playerPointsClass = Class.forName("org.black_ixx.playerpoints.PlayerPoints");
+                    Object playerPointsInstance = playerPointsClass.getMethod("getInstance").invoke(null);
+                    Object api = playerPointsClass.getMethod("getAPI").invoke(playerPointsInstance);
+
+                    playerPointsAPI = (PlayerPointsAPI) api;
+                    registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
+                            this.getConfig().getString("economy.playerpoints.prefix", ""),
+                            this.getConfig().getString("economy.playerpoints.suffix", " Points"))
+                    );
+                    getLogger().info("PlayerPoints hook successfully!");
+                    pointsHooked = true;
+                } catch (Exception e) {
+                    //getLogger().severe("Failed to hook into PlayerPoints: " + e.getMessage());
+                }
+            }
+        }
+
+        if (!pointsHooked) {
+            getLogger().warning("Points support will be disabled.");
+        }
+
+        // Setăm flag-ul pentru a preveni reapelarea setup-ului
+        pointsSetupDone = true;
     }
 
     @Override
@@ -305,6 +344,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     public void reload() {
         super.reloadConfig();
+        setupPointsEconomy();
 
         // Verificăm și înregistrăm doar dacă nu există deja economia respectivă
         if (getEconomyType("invalid") == null) {
@@ -325,83 +365,22 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             );
         }
 
-        if (getEconomyType("playerpoints") == null && Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints") != null) {
-            playerPointsAPI = PlayerPoints.getInstance().getAPI();
-            registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
-                    this.getConfig().getString("economy.playerpoints.prefix", ""),
-                    this.getConfig().getString("economy.playerpoints.suffix", " Points"))
-            );
-        } else if (getEconomyType("premiumpoints") == null && Bukkit.getServer().getPluginManager().getPlugin("PremiumPoints") != null) {
-            playerPointsAPI = PremiumPoints.getInstance().getAPI();
-            registerEconomyType("premiumpoints", new PlayerPointsEconomyType(this,
-                    this.getConfig().getString("economy.premiumpoints.prefix", ""),
-                    this.getConfig().getString("economy.premiumpoints.suffix", " Points"))
-            );
-        }
-
         if (getEconomyType("vault") == null) {
             if (setupEconomy()) {
                 registerEconomyType("vault", new VaultEconomyType(this,
                         this.getConfig().getString("economy.vault.prefix", "$"),
-                        this.getConfig().getString("economy.vault.suffix", ""))
-                );
+                        this.getConfig().getString("economy.vault.suffix", "")));
                 getLogger().info("Vault hook successfully!");
             } else {
                 getLogger().warning("Vault economy not found. Vault support will be disabled.");
             }
         }
 
-        ArrayList<String> custom = new ArrayList<>();
-        for (Map.Entry<String, EconomyType> entry : economyTypes.entrySet()) {
-            if (entry.getValue() instanceof CustomEconomyType) {
-                custom.add(entry.getKey());
-            }
-        }
-        for (String s : custom) {
-            economyTypes.remove(s);
-        }
-
-        // Load custom economy types from files
-        FileVisitor<Path> fileVisitor = new SimpleFileVisitor<Path>() {
-            final URI economyTypeRoot = Paths.get(MoneyPouchDeluxe.this.getDataFolder() + File.separator + "customeconomytype").toUri();
-
-            @Override
-            public FileVisitResult visitFile(Path path, BasicFileAttributes attributes) {
-                File economyTypeFile = new File(path.toUri());
-                if (!economyTypeFile.getName().toLowerCase().endsWith(".yml")) return FileVisitResult.CONTINUE;
-
-                YamlConfiguration config = new YamlConfiguration();
-                try {
-                    config.load(economyTypeFile);
-                } catch (Exception ex) {
-                    return FileVisitResult.CONTINUE;
-                }
-
-                String id = economyTypeFile.getName().replace(".yml", "");
-                if (!StringUtils.isAlphanumeric(id)) {
-                    return FileVisitResult.CONTINUE;
-                }
-
-                String command = config.getString("transaction-prize-command", "");
-
-                CustomEconomyType customEconomyType = new CustomEconomyType(
-                        MoneyPouchDeluxe.this.getConfig().getString("economy." + id + ".prefix", ""),
-                        MoneyPouchDeluxe.this.getConfig().getString("economy." + id + ".suffix", ""),
-                        command);
-
-                registerEconomyType(id, customEconomyType);
-                return FileVisitResult.CONTINUE;
-            }
-        };
-
-        try {
-            Files.walkFileTree(Paths.get(this.getDataFolder() + File.separator + "customeconomytype"), fileVisitor);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Reload pouches
+        // Pouches reload
         pouches.clear();
+
+        Set<String> invalidPouchesLogged = new HashSet<>();
+
         for (String pouchName : this.getConfig().getConfigurationSection("pouches.tier").getKeys(false)) {
             String path = "pouches.tier." + pouchName;
 
@@ -418,11 +397,14 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
             ItemStack itemStack = getItemStack(path, this.getConfig(), itemName, lore);
 
-            // Verificăm dacă economia este validă înainte de a atribui tipul de economie
             EconomyType economyType = getEconomyType(economyTypeId.toLowerCase());
             if (economyType == null) {
-                economyType = getEconomyType("invalid"); // Folosește "invalid" dacă economia nu este găsită
-                super.getLogger().warning("Pouch with ID " + pouchName + " tried to use an invalid economy type '" + economyTypeId + "'.");
+                if (!invalidPouchesLogged.contains(pouchName)) {
+                    economyType = getEconomyType("invalid");
+                    super.getLogger().warning("Pouch with ID " + pouchName + " tried to use an invalid economy type '" + economyTypeId + "'.");
+                    invalidPouchesLogged.add(pouchName);
+                }
+                continue;
             }
 
             boolean purchasable = this.getConfig().contains("shop.purchasable-items." + pouchName);
