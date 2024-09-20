@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class Pouch {
 
-    private final String id; // acest id este moneypouch, pointspouch etc.
+    private final String id;
     private final long minRange;
     private final long maxRange;
     private final ItemStack itemStack;

@@ -6,7 +6,7 @@
 
     <groupId>dev.padrewin</groupId>
     <artifactId>MoneyPouchDeluxe</artifactId>
-    <version>1.3.4</version>
+    <version>1.4</version>
     <packaging>jar</packaging>
 
     <name>MoneyPouchDeluxe</name>
@@ -108,7 +108,7 @@
         <dependency>
             <groupId>dev.padrewin</groupId>
             <artifactId>premiumpoints</artifactId>
-            <version>1.3.2</version>
+            <version>1.3.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
