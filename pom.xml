@@ -6,7 +6,7 @@
 
     <groupId>dev.padrewin</groupId>
     <artifactId>MoneyPouchDeluxe</artifactId>
-    <version>1.4</version>
+    <version>1.4.1</version>
     <packaging>jar</packaging>
 
     <name>MoneyPouchDeluxe</name>
@@ -22,10 +22,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.13.0</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -64,82 +65,111 @@
     </build>
 
     <repositories>
-        <repository>
-            <id>com.github.coldplugin</id>
-            <url>https://maven.pkg.github.com/Cold-Development/ColdDev</url>
-        </repository>
+
         <repository>
             <id>com.github.padrewin</id>
             <url>https://maven.pkg.github.com/padrewin/PremiumPoints</url>
         </repository>
+
+        <repository>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+
+        <repository>
+            <id>com.github.coldplugin</id>
+            <url>https://maven.pkg.github.com/Cold-Development/ColdDev</url>
+        </repository>
+
         <repository>
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
+
         <repository>
             <id>vault-repo</id>
             <url>http://nexus.hc.to/content/repositories/pub_releases</url>
         </repository>
+
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+
         <repository>
             <id>spigotmc-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+
         <repository>
             <id>minecraft-repo</id>
             <url>https://libraries.minecraft.net/</url>
         </repository>
+
         <repository>
             <id>rosewood-repo</id>
             <url>https://repo.rosewooddev.io/repository/public/</url>
         </repository>
+
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>dev.padrewin</groupId>
-            <artifactId>coldplugin</artifactId>
-            <version>1.3.3</version>
-            <scope>compile</scope>
-        </dependency>
+
         <dependency>
             <groupId>dev.padrewin</groupId>
             <artifactId>premiumpoints</artifactId>
             <version>1.3.3</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.black_ixx</groupId>
-            <artifactId>playerpoints</artifactId>
-            <version>3.2.7</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.20.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>dev.padrewin</groupId>
+            <artifactId>coldplugin</artifactId>
+            <version>1.3.4</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.20.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.black_ixx</groupId>
+            <artifactId>playerpoints</artifactId>
+            <version>3.2.7</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
             <version>1.7</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.mojang</groupId>
             <artifactId>authlib</artifactId>
             <version>3.18.38</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>24.1.0</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
+
     </dependencies>
 </project>
