@@ -69,20 +69,19 @@ pouches:
     revealsound: "BLOCK_ANVIL_LAND"     # (ANVIL_LAND  pre-1.9)
     endsound: "ENTITY_GENERIC_EXPLODE"  # (EXPLODE  pre-1.9)
 
-# Title settings (will not work before 1.8, timings will not work before 1.10)
-# You can now use %pouchname% placeholder to show pouch name in the subtitle of the opening sequence
-title:
-  speed-in-tick: 10
-  subtitle: "&7&oOpening %pouchname%..."
-  obfuscate-colour: "&6"
-  reveal-colour: "&f&l"
-  prefix-colour: "&a&l"
-  suffix-colour: "&a"
-  obfuscate-digit-char: "#"
-  obfuscate-format-char: "|"
-  format:               # (adds commas e.g   $1,924,281)
-    enabled: false
-    reveal-comma: true  # the commas will already be revealed when opening
+  # Title settings (will not work before 1.8, timings will not work before 1.10)
+  title:
+    speed-in-tick: 10
+    subtitle: "&7&oOpening..."
+    obfuscate-colour: "&6"
+    reveal-colour: "&f&l"
+    prefix-colour: "&a&l"
+    suffix-colour: "&a"
+    obfuscate-digit-char: "#"
+    obfuscate-format-char: "|"
+    format:               # (adds commas e.g   $1,924,281)
+      enabled: false
+      reveal-comma: true  # the commas will already be revealed when opening
 
 # Rather than showing each digit left-to-right, reveal it right-to-left
 reverse-pouch-reveal: true

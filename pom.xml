@@ -131,7 +131,7 @@
         <dependency>
             <groupId>dev.padrewin</groupId>
             <artifactId>coldplugin</artifactId>
-            <version>1.3.4</version>
+            <version>1.4</version>
             <scope>compile</scope>
         </dependency>
 

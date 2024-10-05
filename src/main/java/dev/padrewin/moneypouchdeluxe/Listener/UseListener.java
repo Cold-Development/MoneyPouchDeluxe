@@ -3,11 +3,12 @@ package dev.padrewin.moneypouchdeluxe.Listener;
 import org.black_ixx.playerpoints.PlayerPoints;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.*;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import dev.padrewin.moneypouchdeluxe.EconomyType.InvalidEconomyType;
 import dev.padrewin.moneypouchdeluxe.Title.Title_Other;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
@@ -16,10 +17,12 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashSet;
@@ -94,6 +97,27 @@ public class UseListener implements Listener {
             player.getInventory().removeItem(itemInHand);
         }
         player.updateInventory();
+    }
+
+    private boolean compareSkullTextures(SkullMeta skullMeta1, SkullMeta skullMeta2) {
+        try {
+            Field profileField = skullMeta1.getClass().getDeclaredField("profile");
+            profileField.setAccessible(true);
+            GameProfile profile1 = (GameProfile) profileField.get(skullMeta1);
+            GameProfile profile2 = (GameProfile) profileField.get(skullMeta2);
+
+            if (profile1 == null || profile2 == null) {
+                return false;
+            }
+
+            Property property1 = profile1.getProperties().get("textures").iterator().next();
+            Property property2 = profile2.getProperties().get("textures").iterator().next();
+
+            return property1 != null && property2 != null && property1.equals(property2);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private void processPouchEvent(Player player, Pouch pouch, Cancellable event) {
@@ -172,16 +196,20 @@ public class UseListener implements Listener {
             this.payment = payment;
             this.pouch = pouch;
 
-            this.prefixColour = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("title.prefix-colour", "&a&l"));
-            this.suffixColour = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("title.suffix-colour", "&a"));
-            this.revealColour = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("title.reveal-colour", "&f&l"));
-            this.obfuscateColour = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("title.obfuscate-colour", "&6"));
-            this.obfuscateDigitChar = plugin.getConfig().getString("title.obfuscate-digit-char", "#");
+            this.prefixColour = ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("pouches.title.prefix-colour"));
+            this.suffixColour = ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("pouches.title.suffix-colour"));
+            this.revealColour = ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("pouches.title.reveal-colour"));
+            this.obfuscateColour = ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("pouches.title.obfuscate-colour"));
+            this.obfuscateDigitChar = plugin.getConfig().getString("pouches.title.obfuscate-digit-char", "#");
             this.obfuscateDelimiterChar = ",";
-            this.delimiter = plugin.getConfig().getBoolean("title.format.enabled", false);
-            this.revealComma = plugin.getConfig().getBoolean("title.format.reveal-comma", false);
+            this.delimiter = plugin.getConfig().getBoolean("pouches.title.format.enabled", false);
+            this.revealComma = plugin.getConfig().getBoolean("pouches.title.format.reveal-comma", false);
             this.number = (delimiter ? (new DecimalFormat("#,###").format(payment)) : String.valueOf(payment));
-            this.reversePouchReveal = plugin.getConfig().getBoolean("reverse-pouch-reveal", true);
+            this.reversePouchReveal = plugin.getConfig().getBoolean("reverse-pouch-reveal");
         }
 
         @Override
@@ -224,28 +252,9 @@ public class UseListener implements Listener {
                     } else viewedTitle.append(obfuscateColour).append(ChatColor.MAGIC).append(obfuscateDigitChar);
                 }
             }
-
-            ConfigurationSection titleSection = plugin.getConfig().getConfigurationSection("title");
-            if (titleSection == null) {
-                Bukkit.getLogger().warning("Could not find 'title' section in config.");
-                return;
-            }
-
-            String pouchId = pouch.getId();
-            String pouchPath = "pouches.tier." + pouchId;
-
-            String pouchName = plugin.getConfig().getString(pouchPath + ".name");
-
-            if (pouchName == null) {
-                Bukkit.getLogger().warning("Could not find name for pouch ID: " + pouchId);
-                pouchName = pouchId;
-            }
-
-            String subtitleConfig = titleSection.getString("subtitle", "&7&oOpening %pouchname%...");
-            String subtitle = ChatColor.translateAlternateColorCodes('&', subtitleConfig.replace("%pouchname%", pouchName));
-
-            plugin.getTitleHandle().sendTitle(player, prefix + viewedTitle + suffix, subtitle);
-                position++;
+            plugin.getTitleHandle().sendTitle(player, prefix + viewedTitle + suffix,
+                    ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("pouches.title.subtitle")));
+            position++;
 
             if (position > number.length()) {
                 stop();
@@ -265,7 +274,9 @@ public class UseListener implements Listener {
 
             boolean success = false;
             try {
+                // Verifică dacă economia este PlayerPoints
                 if (pouch.getEconomyType().getPrefix().equalsIgnoreCase("PlayerPoints")) {
+                    // Obține instanța PlayerPointsAPI
                     PlayerPointsAPI playerPointsAPI = null;
                     Plugin pluginInstance = Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints");
 
