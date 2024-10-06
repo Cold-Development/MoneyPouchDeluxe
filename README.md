@@ -35,6 +35,10 @@
 #    Textures: https://minecraft-heads.com/custom-heads                                                 #
 #########################################################################################################
 
+# Holograms for pouches
+holograms:
+  enabled: false
+
 # If you don't want to use custom textures such as "PLAYER_HEAD" just replace it with "CHEST" or "ENDER_CHEST" and leave "texture-url:" empty. You have an example below somewhere.
 # You can use placeholders in the pouch's lore. %pricerange_from% and %pricerange_to%
 # economytypes can be: VAULT (money), XP, PlayerPoints, LemonMobCoins, owncustomname (name of defined custom pouch)
@@ -182,6 +186,8 @@ messages:
   reloaded: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» MoneyPouchDeluxe has been reloaded."
   update_notification: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» &cA new version &4%latest_version% &cwas found &4(your version: %current_version%)&c. &cPlease update: &n%update_link%"
   kill-holo: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» Pouch hologram removed."
+  holograms_enabled: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» Holograms are now enabled."
+  holograms_disabled: "&8「&x&F&F&6&7&0&0Mo&x&F&E&7&6&0&0ne&x&F&C&8&B&0&0yP&x&F&B&6&D&0&0ou&x&F&A&B&0&0&0ch&x&F&6&C&2&0&0De&x&F&7&D&4&0&0lu&x&F&6&E&6&0&0xe&8」&7» Holograms are now disabled."
 ```
 
 # 💻 Commands
