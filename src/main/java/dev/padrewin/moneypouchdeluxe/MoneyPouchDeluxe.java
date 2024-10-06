@@ -15,15 +15,14 @@ import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetterLatest;
 import dev.padrewin.moneypouchdeluxe.Title.Title;
 import dev.padrewin.moneypouchdeluxe.Title.Title_Bukkit;
-import dev.padrewin.premiumpoints.PremiumPoints;
 import net.milkbowl.vault.economy.Economy;
 import org.apache.commons.lang.StringUtils;
-import org.black_ixx.playerpoints.PlayerPoints;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,6 +126,8 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         setupEconomy();
         setupPointsEconomy();
         setupEconomyTypes();
+        boolean hologramsEnabled = areHologramsEnabled();
+        setHologramsEnabled(hologramsEnabled);
 
         getManager(PluginUpdateManager.class);
 
@@ -224,9 +224,10 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
         menuController = new MenuController(this);
 
+        HologramHandler hologramHandler = new HologramHandler(this);
         Objects.requireNonNull(getServer().getPluginCommand("moneypouch")).setExecutor(new MoneyPouchDeluxeBaseCommand(this));
         Objects.requireNonNull(getServer().getPluginCommand("moneypouchshop")).setExecutor(new MoneyPouchDeluxeShopCommand(this));
-        Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this));
+        Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this, hologramHandler));
 
         super.getServer().getPluginManager().registerEvents(menuController, this);
         Bukkit.getScheduler().runTask(this, this::reload);
@@ -396,6 +397,15 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             msg = msg.replace("%player%", playerName);
         }
         return msg;
+    }
+
+    public boolean areHologramsEnabled() {
+        return getConfig().getBoolean("holograms.enabled", false);
+    }
+
+    public void setHologramsEnabled(boolean enabled) {
+        getConfig().set("holograms.enabled", enabled);
+        saveConfig();
     }
 
     public Title getTitleHandle() {
