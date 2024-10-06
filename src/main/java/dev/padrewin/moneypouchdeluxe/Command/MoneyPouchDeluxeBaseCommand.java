@@ -68,11 +68,9 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
                 return true;
             }
 
-            // Creăm o copie a ItemStack-ului cu cantitatea dorită
             ItemStack stackToAdd = pouch.getItemStack().clone();
             stackToAdd.setAmount(amount);
 
-            // Încercăm să adăugăm itemele în inventar
             HashMap<Integer, ItemStack> leftover = target.getInventory().addItem(stackToAdd);
 
             int added = amount;
@@ -93,9 +91,8 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
                         HologramHandler.createHologram(droppedItem, plugin);
                     }
 
-                    // Setăm pickup delay pentru a preveni preluarea imediată
-                    droppedItem.setPickupDelay(40); // 2 secunde delay
-                    droppedItem.setOwner(null); // Prevenim preluarea instantă a itemelor de către owner
+                    droppedItem.setPickupDelay(40);
+                    droppedItem.setOwner(null);
                 }
 
                 sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.FULL_INV)
@@ -103,7 +100,6 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
                 target.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PLAYER_FULL_INV));
             }
 
-            // Mesaje pentru jucător
             sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
                     .replace("%player%", target.getName())
                     .replace("%item%", pouch.getItemStack().getItemMeta().getDisplayName()));
@@ -117,7 +113,6 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
             return true;
         }
 
-        // Mesaje de utilizare
         sender.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "MoneyPouchDeluxe (ver " + plugin.getDescription().getVersion() + ")");
         sender.sendMessage(ChatColor.GRAY + "<> = required, [] = optional");
         sender.sendMessage(ChatColor.YELLOW + "/mp | /cp :" + ChatColor.GRAY + " view this menu");
@@ -127,6 +122,7 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
         sender.sendMessage(ChatColor.YELLOW + "/mpa economies | /cpa economies :" + ChatColor.GRAY + " list all economies");
         sender.sendMessage(ChatColor.YELLOW + "/mpa reload | /cpa reload :" + ChatColor.GRAY + " reload the config");
         sender.sendMessage(ChatColor.YELLOW + "/mpa killholo | /cpa killholo :" + ChatColor.GRAY + " kill holo made by plugin");
+        sender.sendMessage(ChatColor.YELLOW + "/mpa toggleholo | /cpa toggleholo:" + ChatColor.GRAY + " enable or disable holograms for pouches");
 
         return true;
     }

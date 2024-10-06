@@ -1,5 +1,6 @@
 package dev.padrewin.moneypouchdeluxe.Command;
 
+import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import dev.padrewin.moneypouchdeluxe.EconomyType.EconomyType;
@@ -19,9 +20,11 @@ import java.util.*;
 public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabCompleter {
 
     private final MoneyPouchDeluxe plugin;
+    private final HologramHandler hologramHandler;
 
-    public MoneyPouchDeluxeAdminCommand(MoneyPouchDeluxe plugin) {
+    public MoneyPouchDeluxeAdminCommand(MoneyPouchDeluxe plugin, HologramHandler hologramHandler) {
         this.plugin = plugin;
+        this.hologramHandler = hologramHandler;
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -60,6 +63,19 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
                 String hologramsRemovedMessage = plugin.getMessage(MoneyPouchDeluxe.Message.KILL_HOLO);
                 sender.sendMessage(hologramsRemovedMessage);
                 return true;
+            } else if (args[0].equals("toggleholo")) {
+                boolean enabled = plugin.areHologramsEnabled();
+                plugin.setHologramsEnabled(!enabled);
+
+                if (!enabled) {
+                    hologramHandler.killAllPouchHolograms();
+                }
+
+                String messageKey = enabled ? "messages.holograms_disabled" : "messages.holograms_enabled";
+                String message = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString(messageKey)));
+
+                sender.sendMessage(message);
+                return true;
             }
         }
 
@@ -72,6 +88,7 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
         sender.sendMessage(ChatColor.YELLOW + "/mpa economies | /cpa economies :" + ChatColor.GRAY + " list all economies");
         sender.sendMessage(ChatColor.YELLOW + "/mpa reload | /cpa rload :" + ChatColor.GRAY + " reload the config");
         sender.sendMessage(ChatColor.YELLOW + "/mpa killholo | /cpa killholo :" + ChatColor.GRAY + " kill holo made by plugin");
+        sender.sendMessage(ChatColor.YELLOW + "/mpa toggleholo | /cpa toggleholo:" + ChatColor.GRAY + " enable or disable holograms for pouches");
         return true;
     }
 
@@ -79,7 +96,7 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
     public List<String> onTabComplete(CommandSender sender, Command command, String s, String[] args) {
         if (sender instanceof Player) {
             if (args.length == 1) {
-                List<String> options = Arrays.asList("list", "economies", "reload", "killholo");
+                List<String> options = Arrays.asList("list", "economies", "reload", "killholo", "toggleholo");
                 List<String> completions = new ArrayList<>();
                 StringUtil.copyPartialMatches(args[0], options, completions);
                 Collections.sort(completions);
