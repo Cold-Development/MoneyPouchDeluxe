@@ -1,11 +1,14 @@
 package dev.padrewin.moneypouchdeluxe.Exception;
 
+import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -15,7 +18,12 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class HologramHandler implements Listener {
+
+    private static final Map<Item, ArmorStand> hologramMap = new HashMap<>();
 
     private final JavaPlugin plugin;
 
@@ -35,18 +43,19 @@ public class HologramHandler implements Listener {
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent event) {
         Item pickedItem = event.getItem();
-        NamespacedKey hologramKey = new NamespacedKey(plugin, "is_hologram");
 
-        for (ArmorStand armorStand : pickedItem.getWorld().getEntitiesByClass(ArmorStand.class)) {
-            if (armorStand.getPersistentDataContainer().has(hologramKey, PersistentDataType.BYTE)) {
-                if (armorStand.getLocation().distance(pickedItem.getLocation()) < 1.5) {
-                    armorStand.remove();
-                }
-            }
+        ArmorStand hologram = hologramMap.get(pickedItem);
+        if (hologram != null) {
+            hologram.remove();
+            hologramMap.remove(pickedItem);
         }
     }
 
     public static void createHologram(Item droppedItem, JavaPlugin plugin) {
+        if (!(plugin instanceof MoneyPouchDeluxe) || !((MoneyPouchDeluxe) plugin).areHologramsEnabled()) {
+            return;
+        }
+
         ItemStack itemStack = droppedItem.getItemStack();
 
         if (itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(new NamespacedKey(plugin, "pouch-id"), PersistentDataType.STRING)) {
@@ -61,6 +70,8 @@ public class HologramHandler implements Listener {
                 stand.getPersistentDataContainer().set(hologramKey, PersistentDataType.BYTE, (byte) 1);
             });
 
+            hologramMap.put(droppedItem, hologram);
+
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -68,6 +79,7 @@ public class HologramHandler implements Listener {
                         hologram.teleport(droppedItem.getLocation().add(0, 1, 0));
                     } else {
                         hologram.remove();
+                        hologramMap.remove(droppedItem);
                         this.cancel();
                     }
                 }
@@ -77,21 +89,28 @@ public class HologramHandler implements Listener {
 
     private void cleanUpHologramsOnServerStart() {
         for (World world : Bukkit.getWorlds()) {
-            for (ArmorStand armorStand : world.getEntitiesByClass(ArmorStand.class)) {
-                if (armorStand.getPersistentDataContainer().has(new NamespacedKey(plugin, "is_hologram"), PersistentDataType.BYTE)) {
-                    boolean foundNearbyItem = false;
-                    for (Item item : world.getEntitiesByClass(Item.class)) {
-                        if (item.getLocation().distance(armorStand.getLocation()) < 1.5) {
-                            foundNearbyItem = true;
-                            break;
-                        }
-                    }
-
-                    if (!foundNearbyItem) {
-                        armorStand.remove();
-                    }
+            for (Item item : world.getEntitiesByClass(Item.class)) {
+                ArmorStand hologram = hologramMap.get(item);
+                if (hologram != null && item.getLocation().distance(hologram.getLocation()) >= 1.5) {
+                    hologram.remove();
+                    hologramMap.remove(item);
                 }
             }
         }
     }
+
+    public void killAllPouchHolograms() {
+        for (World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (entity instanceof LivingEntity) {
+                    LivingEntity livingEntity = (LivingEntity) entity;
+                    if (livingEntity.getPersistentDataContainer().has(new NamespacedKey(plugin, "is_hologram"), PersistentDataType.BYTE)) {
+                        livingEntity.remove();
+                    }
+                }
+            }
+        }
+        hologramMap.clear();
+    }
+
 }
