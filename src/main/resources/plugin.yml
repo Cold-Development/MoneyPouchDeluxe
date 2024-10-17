@@ -3,7 +3,7 @@ version: ${version}
 main: dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe
 author: padrewin
 website: 'https://github.com/Cold-Development/MoneyPouchDeluxe'
-softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints, PremiumPoints]
+softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints, PremiumPoints, ColdBits]
 api-version: "1.13"
 commands:
   moneypouch:

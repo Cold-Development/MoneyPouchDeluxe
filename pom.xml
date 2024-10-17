@@ -41,7 +41,7 @@
                         <configuration>
                             <relocations>
                                 <relocation>
-                                    <pattern>dev.padrewin.coldplugin</pattern>
+                                    <pattern>dev.padrewin.colddev</pattern>
                                     <shadedPattern>dev.padrewin.moneypouchdeluxe.libs.coldplugin</shadedPattern>
                                 </relocation>
                             </relocations>
@@ -65,6 +65,11 @@
     </build>
 
     <repositories>
+
+        <repository>
+            <id>com.github.coldbits</id>
+            <url>https://maven.pkg.github.com/Cold-Development/ColdBits</url>
+        </repository>
 
         <repository>
             <id>com.github.padrewin</id>
@@ -117,8 +122,15 @@
 
         <dependency>
             <groupId>dev.padrewin</groupId>
-            <artifactId>premiumpoints</artifactId>
-            <version>1.3.3</version>
+            <artifactId>ColdBits</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.padrewin</groupId>
+            <artifactId>PremiumPoints</artifactId>
+            <version>1.3.4</version>
             <scope>provided</scope>
         </dependency>
 
@@ -131,8 +143,8 @@
 
         <dependency>
             <groupId>dev.padrewin</groupId>
-            <artifactId>coldplugin</artifactId>
-            <version>1.4</version>
+            <artifactId>colddev</artifactId>
+            <version>1.4.1</version>
             <scope>compile</scope>
         </dependency>
 

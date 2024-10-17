@@ -1,8 +1,8 @@
 package dev.padrewin.moneypouchdeluxe;
 
-import dev.padrewin.coldplugin.ColdPlugin;
-import dev.padrewin.coldplugin.manager.Manager;
-import dev.padrewin.coldplugin.manager.PluginUpdateManager;
+import dev.padrewin.colddev.ColdPlugin;
+import dev.padrewin.colddev.manager.Manager;
+import dev.padrewin.colddev.manager.PluginUpdateManager;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeAdminCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeBaseCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeShopCommand;
@@ -140,7 +140,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         getLogger().info(" \\____\\___/|_____|____/");
         getLogger().info("    " + pluginName + " v" + getDescription().getVersion());
         getLogger().info("    Author(s): " + getDescription().getAuthors().get(0));
-        getLogger().info("    (c) Cold Development. All rights reserved.");
+        getLogger().info("    (c) Cold Development ❄");
         getLogger().info("");
 
         this.executeVersionSpecificActions();
@@ -258,6 +258,26 @@ public class MoneyPouchDeluxe extends ColdPlugin {
                             this.getConfig().getString("economy.premiumpoints.suffix", " Points"))
                     );
                     getLogger().info("PremiumPoints hook successfully!");
+                    pointsHooked = true;
+                } catch (Exception e) {
+                    //getLogger().severe("Failed to hook into PremiumPoints: " + e.getMessage());
+                }
+            }
+        }
+
+        if (Bukkit.getServer().getPluginManager().getPlugin("ColdBits") != null && Bukkit.getServer().getPluginManager().getPlugin("ColdBits").isEnabled()) {
+            if (getEconomyType("coldbits") == null) {
+                try {
+                    Class<?> coldBitsClass = Class.forName("dev.padrewin.coldbits.ColdBits");
+                    Object coldBitsInstance = coldBitsClass.getMethod("getInstance").invoke(null);
+                    Object api = coldBitsClass.getMethod("getAPI").invoke(coldBitsInstance);
+
+                    playerPointsAPI = (PlayerPointsAPI) api;
+                    registerEconomyType("coldbits", new PlayerPointsEconomyType(this,
+                            this.getConfig().getString("economy.coldbits.prefix", ""),
+                            this.getConfig().getString("economy.coldbits.suffix", " Bits"))
+                    );
+                    getLogger().info("ColdBits hook successfully!");
                     pointsHooked = true;
                 } catch (Exception e) {
                     //getLogger().severe("Failed to hook into PremiumPoints: " + e.getMessage());
