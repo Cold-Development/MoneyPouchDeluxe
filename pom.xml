@@ -122,14 +122,14 @@
 
         <dependency>
             <groupId>dev.padrewin</groupId>
-            <artifactId>ColdBits</artifactId>
+            <artifactId>coldbits</artifactId>
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>dev.padrewin</groupId>
-            <artifactId>PremiumPoints</artifactId>
+            <artifactId>premiumpoints</artifactId>
             <version>1.3.4</version>
             <scope>provided</scope>
         </dependency>
