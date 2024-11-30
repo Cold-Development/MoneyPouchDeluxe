@@ -13,6 +13,8 @@ holograms:
 # You can use placeholders in the pouch's lore. %pricerange_from% and %pricerange_to%
 # economytypes can be: VAULT (money), XP, PlayerPoints, LemonMobCoins, owncustomname (name of defined custom pouch)
 
+# Pouch now works with permissions. If you want permissions use permission-required: moneypouch.pouches.pouchName line below the economytype line. If you don't want permissions, delete the entire line.
+
 pouches:
   tier:
     moneypouch:
@@ -24,7 +26,6 @@ pouches:
         to: 15000
       options:
         economytype: "VAULT"
-        permission-required: false
       lore:
         - ""
         - "&7&oHow much money do you think is in here?"
@@ -58,7 +59,7 @@ pouches:
         to: 150
       options:
         economytype: "XP"
-        permission-required: false      # requires permission "moneypouch.pouches.xppouch"
+        permission-required: moneypouch.pouches.xppouch # requires permission "moneypouch.pouches.xppouch" or you can delete the entire line if you don't want permissions
       lore:
         - ""
         - "&7&oHow much XP do you think is in here?"

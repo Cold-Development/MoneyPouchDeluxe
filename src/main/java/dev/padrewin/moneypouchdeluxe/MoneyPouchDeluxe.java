@@ -122,6 +122,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     @Override
     public void enable() {
         instance = this;
+        saveDefaultConfig();
 
         setupEconomy();
         setupPointsEconomy();
@@ -236,6 +237,13 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
         getServer().getPluginManager().registerEvents(new ServerLoadListener(this), this);
         getServer().getScheduler().runTask(this, this::reload);
+
+        if (!getDataFolder().exists()) {
+            getDataFolder().mkdirs();
+        }
+
+        saveDefaultConfig();
+        reloadConfig();
     }
 
     private void setupPointsEconomy() {
@@ -425,7 +433,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     public void setHologramsEnabled(boolean enabled) {
         getConfig().set("holograms.enabled", enabled);
-        saveConfig();
     }
 
     public Title getTitleHandle() {
@@ -451,7 +458,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         boolean isEconomySetup = setupEconomy();
         setupEconomyTypes();
         setupPointsEconomy();
-
 
         if (!isVaultHooked && !economyTypes.containsKey("vault")) {
             getLogger().warning("Vault economy type not available. Pouches using 'vault' economy type will be ignored.");
@@ -516,13 +522,13 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             e.printStackTrace();
         }
 
-        // Verifică disponibilitatea economiei înainte de a încarca pouches-urile
+        // Verifică disponibilitatea economiei înainte de a încărca pouch-urile
         if (!isEconomySetup) {
             getLogger().warning("Skipping loading of pouches due to missing valid economy setup.");
             return;
         }
 
-        // Încarcă pouches-urile numai după ce economia este setată corect
+        // Încarcă pouch-urile numai după ce economia este setată corect
         pouches.clear();
 
         for (String pouchName : this.getConfig().getConfigurationSection("pouches.tier").getKeys(false)) {
@@ -534,7 +540,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             long priceMin = this.getConfig().getLong(path + ".pricerange.from", 0);
             long priceMax = this.getConfig().getLong(path + ".pricerange.to", 0);
             String economyTypeId = this.getConfig().getString(path + ".options.economytype", "VAULT");
-            boolean permissionRequired = this.getConfig().getBoolean(path + ".options.permission-required", false);
             List<String> lore = this.getConfig().getStringList(path + ".lore");
 
             EconomyType economyType = getEconomyType(economyTypeId);
@@ -573,11 +578,30 @@ public class MoneyPouchDeluxe extends ColdPlugin {
                 shopIs.setItemMeta(shopIsm);
             }
 
-            Pouch pouch = new Pouch(pouchName, priceMin, priceMax, itemStack, economyType, permissionRequired, purchasable, purchaseEconomy, price, shopIs, pouchName);
+            String permission = this.getConfig().getString(path + ".options.permission-required", null);
+            boolean permissionRequired = permission != null; // Dacă există un string, înseamnă că permisiunea este necesară
+
+            Pouch pouch = new Pouch(
+                    pouchName,
+                    priceMin,
+                    priceMax,
+                    itemStack,
+                    economyType,
+                    permissionRequired,
+                    permission, // Transmite permisiunea
+                    purchasable,
+                    purchaseEconomy,
+                    price,
+                    shopIs,
+                    pouchName
+            );
             pouch.initializeUUID();
             pouches.add(pouch);
+
         }
+
     }
+
 
 
     public ItemStack getItemStack(String path, FileConfiguration config, String itemName, List<String> lore) {

@@ -80,7 +80,7 @@ public class UseListener implements Listener {
         }
     }
 
-    private String getPouchId(ItemStack item) {
+    String getPouchId(ItemStack item) {
         if (item.hasItemMeta()) {
             ItemMeta meta = item.getItemMeta();
             return meta.getPersistentDataContainer().get(new NamespacedKey(MoneyPouchDeluxe.getInstance(), "pouch-id"), PersistentDataType.STRING);
@@ -135,9 +135,10 @@ public class UseListener implements Listener {
             return;
         }
 
-        String permission = "moneypouch.pouches." + pouch.getId();
-        if (pouch.isPermissionRequired() && !player.hasPermission(permission)) {
+        String permission = pouch.getPermission(); // Ia permisiunea din pouch
+        if (pouch.isPermissionRequired() && (permission == null || !player.hasPermission(permission))) {
             player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
+            event.setCancelled(true); // Anulează interacțiunea
             return;
         }
 

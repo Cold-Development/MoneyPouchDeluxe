@@ -3,6 +3,7 @@ package dev.padrewin.moneypouchdeluxe.Listener;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,10 +11,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
-
-import java.util.List;
+import org.bukkit.persistence.PersistentDataType;
 
 public class UseListenerLatest extends UseListener implements Listener {
 
@@ -24,41 +22,72 @@ public class UseListenerLatest extends UseListener implements Listener {
     @EventHandler
     @Override
     public void onPlayerUse(PlayerInteractEvent event) {
+        //plugin.getLogger().info("PlayerInteractEvent triggered by " + event.getPlayer().getName());
         Player player = event.getPlayer();
+
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {
+            //plugin.getLogger().info("Event action not right-click, ignoring.");
             return;
         }
 
         if (event.getHand() == EquipmentSlot.HAND) {
-            onRightClickInMainHand(player, event);
-        } else {
-            ItemStack offHandItem = player.getInventory().getItemInOffHand();
-            if (offHandItem != null && offHandItem.getType() == Material.PLAYER_HEAD && offHandItem.hasItemMeta()) {
-                ItemMeta offHandMeta = offHandItem.getItemMeta();
-                if (offHandMeta instanceof SkullMeta) {
-                    SkullMeta offHandSkullMeta = (SkullMeta) offHandMeta;
-                    String itemName = offHandSkullMeta.getDisplayName();
-                    List<String> itemLore = offHandSkullMeta.getLore();
+            ItemStack itemInHand = player.getInventory().getItemInMainHand();
+            if (itemInHand == null || itemInHand.getType() == Material.AIR) {
+                return;
+            }
 
-                    for (Pouch p : super.plugin.getPouches()) {
-                        ItemStack pouchItem = p.getItemStack();
-                        if (pouchItem != null && pouchItem.getType() == Material.PLAYER_HEAD && pouchItem.hasItemMeta()) {
-                            ItemMeta pouchMeta = pouchItem.getItemMeta();
-                            if (pouchMeta instanceof SkullMeta) {
-                                SkullMeta pouchSkullMeta = (SkullMeta) pouchMeta;
-                                String pouchName = pouchSkullMeta.getDisplayName();
-                                List<String> pouchLore = pouchSkullMeta.getLore();
+            // Obține ID-ul pouch-ului din item
+            String pouchId = getPouchId(itemInHand);
+            if (pouchId == null) {
+                //plugin.getLogger().info("No pouch ID found for item in hand.");
+                return;
+            }
 
-                                if (itemName != null && itemName.equals(pouchName) &&
-                                        (itemLore != null && itemLore.equals(pouchLore))) {
-                                    event.setCancelled(true);
-                                    break;
-                                }
-                            }
+            // Iterează prin pouch-uri și verifică permisiunea
+            for (Pouch pouch : plugin.getPouches()) {
+                if (pouch.getId().equalsIgnoreCase(pouchId)) {
+                    // Verifică permisiunea
+                    if (pouch.isPermissionRequired()) {
+                        String permission = pouch.getPermission();
+                        //plugin.getLogger().info("Checking permission for pouch: " + pouch.getId());
+                        //plugin.getLogger().info("PermissionRequired: " + pouch.isPermissionRequired() + ", Permission: " + permission);
+                        //plugin.getLogger().info("Player " + player.getName() + " has permission: " + player.hasPermission(permission));
+
+                        if (permission == null || !player.hasPermission(permission)) {
+                            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
+                            event.setCancelled(true);
+                            //plugin.getLogger().info("Player " + player.getName() + " does not have permission for pouch: " + pouch.getId());
+                            return;
                         }
                     }
+
+                    // Dacă are permisiunea, continuă utilizarea pouch-ului
+                    usePouch(player, pouch);
+                    event.setCancelled(true);
+
+                    // Elimină pouch-ul din inventar
+                    ItemStack itemToRemove = player.getInventory().getItemInMainHand();
+                    if (itemToRemove.getAmount() > 1) {
+                        itemToRemove.setAmount(itemToRemove.getAmount() - 1);
+                    } else {
+                        player.getInventory().setItemInMainHand(null);
+                    }
+                    player.updateInventory(); // Actualizează inventarul
+
+                    //plugin.getLogger().info("Pouch " + pouch.getId() + " removed from " + player.getName() + "'s inventory.");
+                    return;
                 }
             }
         }
+    }
+
+    @Override
+    protected String getPouchId(ItemStack item) {
+        if (item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(
+                new NamespacedKey(MoneyPouchDeluxe.getInstance(), "pouch-id"), PersistentDataType.STRING)) {
+            return item.getItemMeta().getPersistentDataContainer().get(
+                    new NamespacedKey(MoneyPouchDeluxe.getInstance(), "pouch-id"), PersistentDataType.STRING);
+        }
+        return null;
     }
 }

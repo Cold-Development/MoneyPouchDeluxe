@@ -21,6 +21,7 @@ public class Pouch {
     private final ItemStack shopItemStack;
     private final boolean permissionRequired;
     private UUID uuid;
+    private String permission = null; // Permisiunea necesară pentru folosire
 
     public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, boolean permissionRequired, String pouchId) {
         this.id = id;
@@ -33,17 +34,20 @@ public class Pouch {
         this.purchaseCurrency = null;
         this.purchasePrice = 0;
         this.shopItemStack = null;
+        this.permission = permission;
         applyUUIDToItemStack(pouchId);
     }
 
-    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, boolean permissionRequired,
-                 boolean purchasable, EconomyType purchaseCurrency, long purchasePrice, ItemStack shopItemStack, String pouchId) {
+    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType,
+                 boolean permissionRequired, String permission, boolean purchasable, EconomyType purchaseCurrency,
+                 long purchasePrice, ItemStack shopItemStack, String pouchId) {
         this.id = id;
         this.minRange = minRange >= maxRange ? maxRange - 1 : minRange;
         this.maxRange = maxRange;
         this.itemStack = itemStack;
         this.economyType = economyType;
         this.permissionRequired = permissionRequired;
+        this.permission = permission; // Stochează permisiunea
         this.purchasable = purchasable;
         this.purchaseCurrency = purchaseCurrency;
         this.purchasePrice = purchasePrice;
@@ -58,6 +62,10 @@ public class Pouch {
     public void initializeUUID() {
         this.uuid = UUID.randomUUID();
         applyUUIDToItemStack(id);
+    }
+
+    public String getPermission() {
+        return permission;
     }
 
     private void applyUUIDToItemStack(String pouchId) {
