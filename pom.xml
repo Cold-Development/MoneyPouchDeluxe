@@ -67,13 +67,9 @@
     <repositories>
 
         <repository>
-            <id>com.github.coldbits</id>
-            <url>https://maven.pkg.github.com/Cold-Development/ColdBits</url>
-        </repository>
-
-        <repository>
-            <id>com.github.padrewin</id>
-            <url>https://maven.pkg.github.com/padrewin/PremiumPoints</url>
+            <id>colddev-repo</id>
+            <url>https://repo.colddev.dev/</url>
+            <!-- Or use <url>https://hub.colddev.dev/repository/public-releases/</url> -->
         </repository>
 
         <repository>
