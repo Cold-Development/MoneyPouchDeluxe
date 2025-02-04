@@ -1,10 +1,12 @@
 package dev.padrewin.moneypouchdeluxe.Command;
 
+import dev.padrewin.moneypouchdeluxe.CustomHeadManager;
 import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -70,6 +72,15 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
 
             ItemStack stackToAdd = pouch.getItemStack().clone();
             stackToAdd.setAmount(amount);
+
+            if (stackToAdd.getType() == Material.PLAYER_HEAD && plugin.getConfig().contains("pouches." + pouch.getId() + ".texture-url")) {
+                String textureURL = plugin.getConfig().getString("pouches." + pouch.getId() + ".texture-url");
+                Bukkit.getLogger().info("[DEBUG] Applying texture for pouch: " + pouch.getId() + " with URL: " + textureURL);
+
+                stackToAdd = CustomHeadManager.getCustomSkull(textureURL);
+                stackToAdd.setAmount(amount);
+            }
+
 
             HashMap<Integer, ItemStack> leftover = target.getInventory().addItem(stackToAdd);
 
