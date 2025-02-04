@@ -22,7 +22,6 @@ import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -603,7 +602,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     }
 
 
-
     public ItemStack getItemStack(String path, FileConfiguration config, String itemName, List<String> lore) {
         ItemStack itemStack = itemGetter.getItem(path, config, this);
 
@@ -631,15 +629,20 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
             if (itemStack.getType() == Material.PLAYER_HEAD && config.contains(path + ".texture-url")) {
                 String textureURL = config.getString(path + ".texture-url");
-                itemStack = CustomHead.getCustomSkull(textureURL);
-                if (itemStack.hasItemMeta()) {
-                    SkullMeta skullMeta = (SkullMeta) itemStack.getItemMeta();
+                Bukkit.getLogger().info("[DEBUG] Applying texture for item at path: " + path + " | Texture: " + textureURL);
+
+                ItemStack skull = CustomHeadManager.getCustomSkull(textureURL);
+
+                if (skull.hasItemMeta() && skull.getItemMeta() instanceof SkullMeta) {
+                    SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
                     if (meta != null) {
                         skullMeta.setDisplayName(meta.getDisplayName());
                         skullMeta.setLore(meta.getLore());
-                        itemStack.setItemMeta(skullMeta);
+                        skull.setItemMeta(skullMeta);
                     }
                 }
+
+                return skull;
             }
         }
 
