@@ -22,6 +22,7 @@ import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -320,6 +321,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     }
 
     private void setupEconomyTypes() {
+
         if (!economyTypes.containsKey("invalid")) {
             registerEconomyType("invalid", new InvalidEconomyType());
         }
@@ -453,9 +455,11 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     public void reload() {
         super.reloadConfig();
+        economyTypes.clear();
 
         boolean isEconomySetup = setupEconomy();
         setupEconomyTypes();
+        pointsSetupDone = false;
         setupPointsEconomy();
 
         if (!isVaultHooked && !economyTypes.containsKey("vault")) {
@@ -629,7 +633,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
             if (itemStack.getType() == Material.PLAYER_HEAD && config.contains(path + ".texture-url")) {
                 String textureURL = config.getString(path + ".texture-url");
-                Bukkit.getLogger().info("[DEBUG] Applying texture for item at path: " + path + " | Texture: " + textureURL);
+                //Bukkit.getLogger().info("[DEBUG] Applying texture for item at path: " + path + " | Texture: " + textureURL);
 
                 ItemStack skull = CustomHeadManager.getCustomSkull(textureURL);
 

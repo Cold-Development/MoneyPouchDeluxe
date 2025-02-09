@@ -12,13 +12,13 @@ import java.util.UUID;
 public class CustomHeadPaper {
 
     public static ItemStack getCustomSkull(String textureURL) {
-        Bukkit.getLogger().info("[DEBUG] Using Paper method for custom head");
+        //Bukkit.getLogger().info("[DEBUG] Using Paper method for custom head");
 
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD, 1);
         SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
 
         if (skullMeta == null) {
-            Bukkit.getLogger().warning("[DEBUG] SkullMeta is null!");
+            //Bukkit.getLogger().warning("[DEBUG] SkullMeta is null!");
             return skull;
         }
 
@@ -29,7 +29,7 @@ public class CustomHeadPaper {
         skullMeta.setPlayerProfile(profile);
         skull.setItemMeta(skullMeta);
 
-        Bukkit.getLogger().info("[DEBUG] Custom head created successfully!");
+        //Bukkit.getLogger().info("[DEBUG] Custom head created successfully!");
 
         return skull;
     }

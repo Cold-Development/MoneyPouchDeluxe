@@ -75,7 +75,7 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
 
             if (stackToAdd.getType() == Material.PLAYER_HEAD && plugin.getConfig().contains("pouches." + pouch.getId() + ".texture-url")) {
                 String textureURL = plugin.getConfig().getString("pouches." + pouch.getId() + ".texture-url");
-                Bukkit.getLogger().info("[DEBUG] Applying texture for pouch: " + pouch.getId() + " with URL: " + textureURL);
+                //Bukkit.getLogger().info("[DEBUG] Applying texture for pouch: " + pouch.getId() + " with URL: " + textureURL);
 
                 stackToAdd = CustomHeadManager.getCustomSkull(textureURL);
                 stackToAdd.setAmount(amount);

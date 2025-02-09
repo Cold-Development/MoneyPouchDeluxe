@@ -13,13 +13,13 @@ import java.util.UUID;
 public class CustomHeadLegacy {
 
     public static ItemStack getCustomSkull(String textureURL) {
-        Bukkit.getLogger().info("[DEBUG] Using Legacy method for custom head");
+        //Bukkit.getLogger().info("[DEBUG] Using Legacy method for custom head");
 
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD, 1);
         SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
 
         if (skullMeta == null) {
-            Bukkit.getLogger().warning("[DEBUG] SkullMeta is null!");
+            //Bukkit.getLogger().warning("[DEBUG] SkullMeta is null!");
             return skull;
         }
 
@@ -32,12 +32,12 @@ public class CustomHeadLegacy {
             profileField.set(skullMeta, profile);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
-            Bukkit.getLogger().warning("[DEBUG] Error applying texture to skull!");
+            //Bukkit.getLogger().warning("[DEBUG] Error applying texture to skull!");
         }
 
         skull.setItemMeta(skullMeta);
 
-        Bukkit.getLogger().info("[DEBUG] Custom head created successfully!");
+        //Bukkit.getLogger().info("[DEBUG] Custom head created successfully!");
 
         return skull;
     }

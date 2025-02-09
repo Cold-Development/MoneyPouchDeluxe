@@ -137,6 +137,9 @@ economy:
   playerpoints:
     prefix: ""
     suffix: " Points"
+  coldbits:
+    prefix: ''
+    suffix: ' bits'
 
 # Messages here
 messages:
