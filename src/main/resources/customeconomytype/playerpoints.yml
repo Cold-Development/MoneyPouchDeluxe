@@ -1,0 +1,13 @@
+# Points through PlayerPoints.
+# Use in pouches.yml with:  economytype: "PlayerPoints"
+#
+# %player% = the player who opened the pouch, %prize% = the amount they won.
+# The command runs from the console, without the leading slash.
+transaction-prize-command: "points give %player% %prize%"
+
+# Display name, shown by %economy% in prize-message and reward-error
+name: ""
+
+# Shown around the amount in the title and messages
+prefix: ""
+suffix: " Points"

@@ -1,15 +1,25 @@
 package dev.padrewin.moneypouchdeluxe.EconomyType;
 
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import org.bukkit.entity.Player;
 
 public abstract class EconomyType {
 
+    private final String name;
     private final String prefix;
     private final String suffix;
 
-    public EconomyType(String prefix, String suffix) {
+    /**
+     * @param name display name, shown by the %economy% placeholder
+     */
+    public EconomyType(String name, String prefix, String suffix) {
+        this.name = name;
         this.prefix = prefix;
         this.suffix = suffix;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getPrefix() {
@@ -29,13 +39,15 @@ public abstract class EconomyType {
     public abstract void processPayment(Player player, long amount);
 
     /**
-     * Charge the player when they purchase a MoneyPouch from the shop.
-     *
-     * @param player the player purchasing a MoneyPouch
-     * @param amount the amount to be charged
-     * @return true if the payment succeeds, false if otherwise
+     * Fills in the reward placeholders of a message: %prize%, %prefix%, %suffix% and %economy%.
      */
-    public abstract boolean doTransaction(Player player, long amount);
+    public String applyPlaceholders(String message, String prize) {
+        return message
+                .replace("%prefix%", Text.color(prefix))
+                .replace("%suffix%", Text.color(suffix))
+                .replace("%economy%", Text.color(name))
+                .replace("%prize%", prize);
+    }
 
     public abstract String toString();
 

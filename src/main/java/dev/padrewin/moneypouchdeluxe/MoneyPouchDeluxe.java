@@ -1,34 +1,31 @@
 package dev.padrewin.moneypouchdeluxe;
 
+import dev.padrewin.colddev.utils.NMSUtil;
+import dev.padrewin.moneypouchdeluxe.hook.NexoHook;
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import dev.padrewin.colddev.ColdPlugin;
 import dev.padrewin.colddev.manager.Manager;
 import dev.padrewin.colddev.manager.PluginUpdateManager;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeAdminCommand;
 import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeBaseCommand;
-import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeShopCommand;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
-import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListenerLatest;
-import dev.padrewin.moneypouchdeluxe.Gui.MenuController;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetterLatest;
 import dev.padrewin.moneypouchdeluxe.Title.Title;
 import dev.padrewin.moneypouchdeluxe.Title.Title_Bukkit;
-import net.milkbowl.vault.economy.Economy;
-import org.apache.commons.lang.StringUtils;
-import org.black_ixx.playerpoints.PlayerPointsAPI;
-import dev.padrewin.coldbits.ColdBitsAPI;
 import org.bukkit.*;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -38,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
@@ -49,14 +47,8 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     private Title titleHandle;
     private ItemGetter itemGetter;
-    private MenuController menuController;
-    private PlayerPointsAPI playerPointsAPI;
-    private ColdBitsAPI coldBitsAPI;
     private static MoneyPouchDeluxe instance;
-    private boolean pointsSetupDone = false;
-    private boolean pointsHooked = false;
-    private boolean isVaultHooked = false;
-    private boolean vaultHookLogged = false;
+    private YamlConfiguration pouchesConfig = new YamlConfiguration();
 
     public MoneyPouchDeluxe() {
         super("Cold-Development", "MoneyPouchDeluxe", 23381, null, null, null);
@@ -126,11 +118,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         instance = this;
         saveDefaultConfig();
 
-        setupEconomy();
-        setupPointsEconomy();
         setupEconomyTypes();
-        boolean hologramsEnabled = areHologramsEnabled();
-        setHologramsEnabled(hologramsEnabled);
 
         getManager(PluginUpdateManager.class);
 
@@ -147,24 +135,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         getLogger().info("");
 
         this.executeVersionSpecificActions();
-
-        boolean isStackerPluginPresent = isStackerPluginDetected();
-
-        if (!isStackerPluginPresent) {
-            new HologramHandler(this);
-
-            NamespacedKey hologramKey = new NamespacedKey(this, "is_hologram");
-
-            for (World world : Bukkit.getWorlds()) {
-                for (ArmorStand armorStand : world.getEntitiesByClass(ArmorStand.class)) {
-                    if (armorStand.getPersistentDataContainer().has(hologramKey, PersistentDataType.BYTE)) {
-                        armorStand.remove();
-                    }
-                }
-            }
-        } else {
-            getLogger().info("Stacker plugin detected. Holograms will not be created to avoid double holo");
-        }
 
         File directory = new File(String.valueOf(this.getDataFolder()));
         if (!directory.exists() && !directory.isDirectory()) {
@@ -201,6 +171,8 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
             ArrayList<String> examples = new ArrayList<>();
             examples.add("examplecustomeconomy.yml");
+            examples.add("vault.yml");
+            examples.add("playerpoints.yml");
             examples.add("README.txt");
 
             for (String name : examples) {
@@ -225,18 +197,14 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             }
         }
 
-        menuController = new MenuController(this);
-
-        HologramHandler hologramHandler = new HologramHandler(this);
         Objects.requireNonNull(getServer().getPluginCommand("moneypouch")).setExecutor(new MoneyPouchDeluxeBaseCommand(this));
-        Objects.requireNonNull(getServer().getPluginCommand("moneypouchshop")).setExecutor(new MoneyPouchDeluxeShopCommand(this));
-        Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this, hologramHandler));
+        Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this));
 
-        getServer().getPluginManager().registerEvents(menuController, this);
+        NexoHook.registerItemsLoadedListener(this);
 
         // Defer the configuration-dependent load until all plugins have
         // completed enable(), so economy hooks can be discovered reliably.
-        Bukkit.getScheduler().runTask(this, (Runnable) this::reload);
+        this.getScheduler().runTask(() -> this.reload());
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
@@ -246,109 +214,16 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         reloadConfig();
     }
 
-    private void setupPointsEconomy() {
-        if (pointsSetupDone) {
-            return;
-        }
-
-        pointsHooked = false;
-
-        if (Bukkit.getServer().getPluginManager().getPlugin("PremiumPoints") != null && Bukkit.getServer().getPluginManager().getPlugin("PremiumPoints").isEnabled()) {
-            if (getEconomyType("playerpoints") == null) {
-                try {
-                    Class<?> premiumPointsClass = Class.forName("dev.padrewin.premiumpoints.PremiumPoints");
-                    Object premiumPointsInstance = premiumPointsClass.getMethod("getInstance").invoke(null);
-                    Object api = premiumPointsClass.getMethod("getAPI").invoke(premiumPointsInstance);
-
-                    playerPointsAPI = (PlayerPointsAPI) api;
-                    registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
-                            this.getConfig().getString("economy.premiumpoints.prefix", ""),
-                            this.getConfig().getString("economy.premiumpoints.suffix", " Points"))
-                    );
-                    getLogger().info("PremiumPoints hook successfully!");
-                    pointsHooked = true;
-                } catch (Exception e) {
-                    //getLogger().severe("Failed to hook into PremiumPoints: " + e.getMessage());
-                }
-            }
-        }
-
-        if (!pointsHooked) {
-            Plugin plugin = Bukkit.getPluginManager().getPlugin("ColdBits");
-
-            if (plugin instanceof dev.padrewin.coldbits.ColdBits) {
-                dev.padrewin.coldbits.ColdBits coldBits =
-                        (dev.padrewin.coldbits.ColdBits) plugin;
-
-                coldBitsAPI = coldBits.getAPI();
-
-                registerEconomyType(
-                        "coldbits",
-                        new ColdBitsEconomyType(
-                                this,
-                                getConfig().getString("economy.coldbits.prefix", ""),
-                                getConfig().getString("economy.coldbits.suffix", " Bits")
-                        )
-                );
-
-                getLogger().info("ColdBits hook successfully!");
-                pointsHooked = true;
-            }
-        }
-
-
-        if (!pointsHooked && Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints") != null) {
-            if (getEconomyType("playerpoints") == null) {
-                try {
-                    Class<?> playerPointsClass = Class.forName("org.black_ixx.playerpoints.PlayerPoints");
-                    Object playerPointsInstance = playerPointsClass.getMethod("getInstance").invoke(null);
-                    Object api = playerPointsClass.getMethod("getAPI").invoke(playerPointsInstance);
-
-                    playerPointsAPI = (PlayerPointsAPI) api;
-                    registerEconomyType("playerpoints", new PlayerPointsEconomyType(this,
-                            this.getConfig().getString("economy.playerpoints.prefix", ""),
-                            this.getConfig().getString("economy.playerpoints.suffix", " Points"))
-                    );
-                    getLogger().info("PlayerPoints hook successfully!");
-                    pointsHooked = true;
-                } catch (Exception e) {
-                    //getLogger().severe("Failed to hook into PlayerPoints: " + e.getMessage());
-                }
-            }
-        }
-
-        if (!pointsHooked) {
-            getLogger().warning("Points support will be disabled.");
-        }
-
-        pointsSetupDone = true;
-    }
-
+    /**
+     * The only built-in economy is XP, since it's vanilla. Every other currency is a custom economy
+     * from the customeconomytype folder, so the plugin never depends on an economy plugin.
+     */
     private void setupEconomyTypes() {
-
-        if (!economyTypes.containsKey("invalid")) {
-            registerEconomyType("invalid", new InvalidEconomyType());
-        }
-
         if (!economyTypes.containsKey("xp")) {
             registerEconomyType("xp", new XPEconomyType(
-                    this.getConfig().getString("economy.xp.prefix", this.getConfig().getString("economy.prefixes.xp", "")),
-                    this.getConfig().getString("economy.xp.suffix", this.getConfig().getString("economy.suffixes.xp", " XP"))));
-        }
-
-        // Asigură-te că Vault este hook-uit înainte de a-l înregistra
-        if (isVaultHooked && !economyTypes.containsKey("vault")) {
-            registerEconomyType("vault", new VaultEconomyType(this,
-                    this.getConfig().getString("economy.vault.prefix", this.getConfig().getString("economy.prefixes.vault", "$")),
-                    this.getConfig().getString("economy.vault.suffix", this.getConfig().getString("economy.suffixes.vault", ""))));
-        } else if (!isVaultHooked) {
-            getLogger().warning("Vault plugin not hooked. Vault economy type will not be registered.");
-        }
-
-        if (Bukkit.getServer().getPluginManager().getPlugin("LemonMobCoins") != null && !economyTypes.containsKey("lemonmobcoins")) {
-            registerEconomyType("lemonmobcoins", new LemonMobCoinsEconomyType(this,
-                    this.getConfig().getString("economy.lemonmobcoins.prefix", ""),
-                    this.getConfig().getString("economy.lemonmobcoins.suffix", " Mob Coins")));
+                    this.getConfig().getString("economy.xp.name", "XP"),
+                    this.getConfig().getString("economy.xp.prefix", ""),
+                    this.getConfig().getString("economy.xp.suffix", " XP")));
         }
     }
 
@@ -362,69 +237,43 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         return List.of();
     }
 
-    private Economy econ = null;
-
-    private boolean setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            getLogger().warning("Vault plugin not found. Vault economy type will not be registered.");
-            isVaultHooked = false; // Actualizează variabila de control
-            return false;
-        }
-        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            getLogger().warning("No economy provider found for Vault.");
-            isVaultHooked = false; // Actualizează variabila de control
-            return false;
-        }
-        econ = rsp.getProvider();
-        if (econ == null) {
-            getLogger().warning("Vault economy provider is not available.");
-            isVaultHooked = false; // Actualizează variabila de control
-            return false;
-        }
-
-        // Logăm mesajul de hook doar dacă este hook-uit pentru prima dată
-        if (!vaultHookLogged) {
-            getLogger().info("Vault hook successfully!");
-            vaultHookLogged = true;
-        }
-
-        // Setăm variabila de control doar dacă hook-ul a fost cu succes
-        isVaultHooked = true;
-        return true;
-    }
-
-    private boolean isStackerPluginDetected() {
-        String[] stackerPlugins = {
-                "RoseStacker",
-                "WildStacker",
-                "EpicStacker",
-                "LagAssist",
-                "SimpleStack",
-                "StackMob",
-                "Stacker"
-        };
-
-        for (String pluginName : stackerPlugins) {
-            if (Bukkit.getPluginManager().getPlugin(pluginName) != null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public PlayerPointsAPI getPlayerPointsAPI() {
-        return playerPointsAPI;
-    }
-
-    public ColdBitsAPI getColdBitsAPI() {
-        return coldBitsAPI;
-    }
-
+    /**
+     * A configured message with messages.prefix in front of it. A message set to "" is disabled:
+     * it comes back empty (without the prefix) and {@link Text#send} skips it.
+     */
     public String getMessage(Message message) {
-        return ChatColor.translateAlternateColorCodes('&', this.getConfig().getString("messages."
-                + message.getId(), message.getDef()));
+        String text = this.getConfig().getString("messages." + message.getId(), message.getDef());
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        return Text.color(this.getConfig().getString("messages.prefix", "") + text);
+    }
 
+    /**
+     * The pouch's configured name for use in messages ({@code %item%}), coloured but with any
+     * {@code <glyph:id>} tags kept, so they still render when the message is sent.
+     */
+    public String getPouchName(Pouch pouch) {
+        String name = pouchesConfig.getString(pouch.getId() + ".name");
+        if (name == null || name.isEmpty()) {
+            return pouch.getItemStack().getItemMeta().getDisplayName();
+        }
+        return Text.color(name);
+    }
+
+    /**
+     * Gives the item to the player. Whatever doesn't fit in their inventory is dropped at their feet,
+     * so a pouch is never lost.
+     *
+     * @return true if at least part of it had to be dropped
+     */
+    public boolean giveOrDrop(Player player, ItemStack item) {
+        Map<Integer, ItemStack> leftover = player.getInventory().addItem(item);
+        for (ItemStack rest : leftover.values()) {
+            Item dropped = player.getWorld().dropItemNaturally(player.getLocation(), rest);
+            dropped.setPickupDelay(40);
+        }
+        return !leftover.isEmpty();
     }
 
     public String getMessage(Message message, String playerName) {
@@ -433,14 +282,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             msg = msg.replace("%player%", playerName);
         }
         return msg;
-    }
-
-    public boolean areHologramsEnabled() {
-        return getConfig().getBoolean("holograms.enabled", false);
-    }
-
-    public void setHologramsEnabled(boolean enabled) {
-        getConfig().set("holograms.enabled", enabled);
     }
 
     public Title getTitleHandle() {
@@ -456,22 +297,63 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     }
 
-    public MenuController getMenuController() {
-        return menuController;
+    /**
+     * pouches.yml: every pouch tier, keyed by its id (the part of config.yml that used to be pouches.tier).
+     */
+    public FileConfiguration getPouchesConfig() {
+        return pouchesConfig;
+    }
+
+    private void loadPouchesConfig() {
+        File file = new File(getDataFolder(), "pouches.yml");
+        if (!file.exists()) {
+            ConfigurationSection legacyTiers = getConfig().getConfigurationSection("pouches.tier");
+            if (legacyTiers != null) {
+                migratePouchesConfig(legacyTiers, file);
+            } else {
+                saveResource("pouches.yml", false);
+            }
+        }
+        pouchesConfig = YamlConfiguration.loadConfiguration(file);
+    }
+
+    /**
+     * Pouches used to live in config.yml under pouches.tier: move them into pouches.yml, keeping
+     * a copy of the old config.yml next to it just in case.
+     */
+    private void migratePouchesConfig(ConfigurationSection legacyTiers, File file) {
+        YamlConfiguration migrated = new YamlConfiguration();
+        copySection(legacyTiers, migrated);
+        try {
+            File configFile = new File(getDataFolder(), "config.yml");
+            Files.copy(configFile.toPath(), new File(getDataFolder(), "config.yml.before-pouches-yml").toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+            migrated.save(file);
+
+            getConfig().set("pouches.tier", null);
+            saveConfig();
+            getLogger().info("Moved " + legacyTiers.getKeys(false).size() + " pouches from config.yml to pouches.yml"
+                    + " (old config saved as config.yml.before-pouches-yml).");
+        } catch (IOException e) {
+            getLogger().severe("Failed to move pouches from config.yml to pouches.yml: " + e.getMessage());
+        }
+    }
+
+    private static void copySection(ConfigurationSection from, ConfigurationSection to) {
+        for (String key : from.getKeys(false)) {
+            if (from.isConfigurationSection(key)) {
+                copySection(from.getConfigurationSection(key), to.createSection(key));
+            } else {
+                to.set(key, from.get(key));
+            }
+        }
     }
 
     public void reload() {
         super.reloadConfig();
+        loadPouchesConfig();
         economyTypes.clear();
-
-        boolean isEconomySetup = setupEconomy();
         setupEconomyTypes();
-        pointsSetupDone = false;
-        setupPointsEconomy();
-
-        if (!isVaultHooked && !economyTypes.containsKey("vault")) {
-            getLogger().warning("Vault economy type not available. Pouches using 'vault' economy type will be ignored.");
-        }
 
         ArrayList<String> custom = new ArrayList<>();
         for (Map.Entry<String, EconomyType> entry : economyTypes.entrySet()) {
@@ -486,125 +368,83 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         Path customEconomyPath = Paths.get(this.getDataFolder() + File.separator + "customeconomytype").toAbsolutePath();
         File customEconomyFolder = customEconomyPath.toFile();
 
-        if (!customEconomyFolder.exists() || !customEconomyFolder.isDirectory()) {
-            return;
-        }
+        if (!customEconomyFolder.isDirectory()) {
+            getLogger().warning("The customeconomytype folder is missing, so no custom economies were loaded."
+                    + " Pouches using a custom economy will be skipped.");
+        } else {
+            try {
+                Files.walkFileTree(customEconomyPath, new SimpleFileVisitor<Path>() {
+                    final URI economyTypeRoot = customEconomyPath.toUri();
 
-        try {
-            Files.walkFileTree(customEconomyPath, new SimpleFileVisitor<Path>() {
-                final URI economyTypeRoot = customEconomyPath.toUri();
+                    @Override
+                    public FileVisitResult visitFile(Path path, BasicFileAttributes attributes) {
+                        File economyTypeFile = new File(path.toUri());
+                        if (!economyTypeFile.getName().toLowerCase().endsWith(".yml")) return FileVisitResult.CONTINUE;
 
-                @Override
-                public FileVisitResult visitFile(Path path, BasicFileAttributes attributes) {
-                    File economyTypeFile = new File(path.toUri());
-                    if (!economyTypeFile.getName().toLowerCase().endsWith(".yml")) return FileVisitResult.CONTINUE;
+                        YamlConfiguration config = new YamlConfiguration();
+                        try {
+                            config.load(economyTypeFile);
+                        } catch (Exception ex) {
+                            getLogger().warning("Failed to load custom economy file: " + economyTypeFile.getName());
+                            return FileVisitResult.CONTINUE;
+                        }
 
-                    YamlConfiguration config = new YamlConfiguration();
-                    try {
-                        config.load(economyTypeFile);
-                    } catch (Exception ex) {
-                        getLogger().warning("Failed to load custom economy file: " + economyTypeFile.getName());
+                        String id = economyTypeFile.getName().replace(".yml", "");
+                        if (!id.matches("[A-Za-z0-9]+")) {
+                            getLogger().warning("Invalid economy ID: " + id + " (must be alphanumeric)");
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        String command = config.getString("transaction-prize-command");
+                        if (command == null) {
+                            getLogger().warning("Missing 'transaction-prize-command' in file: " + economyTypeFile.getName());
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        CustomEconomyType customEconomyType = new CustomEconomyType(
+                                config.getString("name", getConfig().getString("economy." + id + ".name", id)),
+                                config.getString("prefix", getConfig().getString("economy." + id + ".prefix", "")),
+                                config.getString("suffix", getConfig().getString("economy." + id + ".suffix", "")),
+                                command);
+
+                        registerEconomyType(id, customEconomyType);
                         return FileVisitResult.CONTINUE;
                     }
-
-                    String id = economyTypeFile.getName().replace(".yml", "");
-                    if (!StringUtils.isAlphanumeric(id)) {
-                        getLogger().warning("Invalid economy ID: " + id + " (must be alphanumeric)");
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    String command = config.getString("transaction-prize-command");
-                    if (command == null) {
-                        getLogger().warning("Missing 'transaction-prize-command' in file: " + economyTypeFile.getName());
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    CustomEconomyType customEconomyType = new CustomEconomyType(
-                            getConfig().getString("economy." + id + ".prefix", ""),
-                            getConfig().getString("economy." + id + ".suffix", ""),
-                            command);
-
-                    registerEconomyType(id, customEconomyType);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-        // Verifică disponibilitatea economiei înainte de a încărca pouch-urile
-        if (!isEconomySetup) {
-            getLogger().warning("Skipping loading of pouches due to missing valid economy setup.");
-            return;
-        }
-
-        // Încarcă pouch-urile numai după ce economia este setată corect
+        // A pouch whose economy isn't available (plugin missing, custom economy file deleted...) is
+        // skipped on its own below; the others still load.
         pouches.clear();
 
-        for (String pouchName : this.getConfig().getConfigurationSection("pouches.tier").getKeys(false)) {
-            String path = "pouches.tier." + pouchName;
+        for (String pouchName : pouchesConfig.getKeys(false)) {
+            String path = pouchName;
 
-            String itemName = this.getConfig().getString(path + ".name", "Unnamed Pouch");
-            String itemType = this.getConfig().getString(path + ".item", "CHEST");
-            String textureURL = this.getConfig().getString(path + ".texture-url", "");
-            long priceMin = this.getConfig().getLong(path + ".pricerange.from", 0);
-            long priceMax = this.getConfig().getLong(path + ".pricerange.to", 0);
-            String economyTypeId = this.getConfig().getString(path + ".options.economytype", "VAULT");
-            List<String> lore = this.getConfig().getStringList(path + ".lore");
+            String itemName = pouchesConfig.getString(path + ".name", "Unnamed Pouch");
+            String itemType = pouchesConfig.getString(path + ".item", "CHEST");
+            String textureURL = pouchesConfig.getString(path + ".texture-url", "");
+            long priceMin = pouchesConfig.getLong(path + ".pricerange.from", 0);
+            long priceMax = pouchesConfig.getLong(path + ".pricerange.to", 0);
+            String economyTypeId = pouchesConfig.getString(path + ".options.economytype", "VAULT");
+            List<String> lore = pouchesConfig.getStringList(path + ".lore");
 
             EconomyType economyType = getEconomyType(economyTypeId);
             if (economyType == null) {
-                getLogger().info("Ignoring pouch with ID " + pouchName + " due to invalid economy type '" + economyTypeId + "'.");
+                getLogger().warning("Skipping pouch '" + pouchName + "': economy type '" + economyTypeId + "' is missing"
+                        + " (is its plugin installed, or does customeconomytype/" + economyTypeId.toLowerCase() + ".yml exist?)");
                 continue;
             }
 
-            ItemStack itemStack = getItemStack(path, this.getConfig(), itemName, lore);
+            ItemStack itemStack = getItemStack(path, pouchesConfig, itemName, lore);
 
-            boolean purchasable = this.getConfig().contains("shop.purchasable-items." + pouchName);
-            long price = 0;
-            EconomyType purchaseEconomy = null;
-            ItemStack shopIs = null;
-
-            if (purchasable) {
-                price = this.getConfig().getLong("shop.purchasable-items." + pouchName + ".price", 0);
-                String purchaseEconomyId = this.getConfig().getString("shop.purchasable-items." + pouchName + ".currency", "VAULT");
-                purchaseEconomy = getEconomyType(purchaseEconomyId);
-
-                if (purchaseEconomy == null) {
-                    purchaseEconomy = getEconomyType("invalid");
-                    getLogger().warning("Pouch with ID " + pouchName + " tried to use an invalid currency (for /mpshop) economy type '" + purchaseEconomyId + "'.");
-                }
-
-                shopIs = itemStack.clone();
-                ItemMeta shopIsm = shopIs.getItemMeta();
-                List<String> shopIsLore = new ArrayList<>(lore);
-                for (String shopLore : this.getConfig().getStringList("shop.append-to-lore")) {
-                    shopIsLore.add(ChatColor.translateAlternateColorCodes('&', shopLore)
-                            .replace("%price%", String.valueOf(price))
-                            .replace("%prefix%", purchaseEconomy.getPrefix())
-                            .replace("%suffix%", purchaseEconomy.getSuffix()));
-                }
-                shopIsm.setLore(shopIsLore);
-                shopIs.setItemMeta(shopIsm);
+            String permission = pouchesConfig.getString(path + ".options.permission-required", null);
+            if (permission != null && (permission.isEmpty() || permission.equalsIgnoreCase("false"))) {
+                permission = null; // "permission-required: false" means no permission
             }
-
-            String permission = this.getConfig().getString(path + ".options.permission-required", null);
-            boolean permissionRequired = permission != null; // Dacă există un string, înseamnă că permisiunea este necesară
-
-            Pouch pouch = new Pouch(
-                    pouchName,
-                    priceMin,
-                    priceMax,
-                    itemStack,
-                    economyType,
-                    permissionRequired,
-                    permission, // Transmite permisiunea
-                    purchasable,
-                    purchaseEconomy,
-                    price,
-                    shopIs,
-                    pouchName
-            );
+            Pouch pouch = new Pouch(pouchName, priceMin, priceMax, itemStack, economyType, permission);
             pouch.initializeUUID();
             pouches.add(pouch);
 
@@ -620,20 +460,18 @@ public class MoneyPouchDeluxe extends ColdPlugin {
             ItemMeta meta = itemStack.getItemMeta();
 
             if (itemName != null && !itemName.isEmpty()) {
-                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', itemName));
+                Text.setDisplayName(meta, itemName);
             }
 
             long rangeFrom = config.getLong(path + ".pricerange.from");
             long rangeTo = config.getLong(path + ".pricerange.to");
 
             if (lore != null && !lore.isEmpty()) {
-                List<String> coloredLore = new ArrayList<>();
+                List<String> rangedLore = new ArrayList<>();
                 for (String line : lore) {
-                    line = line.replace("%pricerange_from%", String.format("%,d", rangeFrom));
-                    line = line.replace("%pricerange_to%", String.format("%,d", rangeTo));
-                    coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
+                    rangedLore.add(applyPriceRange(line, rangeFrom, rangeTo));
                 }
-                meta.setLore(coloredLore);
+                Text.setLore(meta, rangedLore);
             }
 
             itemStack.setItemMeta(meta);
@@ -647,8 +485,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
                 if (skull.hasItemMeta() && skull.getItemMeta() instanceof SkullMeta) {
                     SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
                     if (meta != null) {
-                        skullMeta.setDisplayName(meta.getDisplayName());
-                        skullMeta.setLore(meta.getLore());
+                        Text.copyNameAndLore(meta, skullMeta);
                         skull.setItemMeta(skullMeta);
                     }
                 }
@@ -658,6 +495,12 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         }
 
         return itemStack;
+    }
+
+    private static String applyPriceRange(String line, long from, long to) {
+        return line
+                .replace("%pricerange_from%", String.format("%,d", from))
+                .replace("%pricerange_to%", String.format("%,d", to));
     }
 
     public <T extends Manager> T getSpecificManager(Class<T> managerClass) {
@@ -673,14 +516,9 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         PRIZE_MESSAGE("prize-message", "&6You have received &c%prefix%%prize%%suffix%&6!"),
         ALREADY_OPENING("already-opening", "&cPlease wait for your current pouch opening to complete first!"),
         INVALID_POUCH("invalid-pouch", "&cThis pouch is invalid and cannot be opened."),
-        INVENTORY_FULL("inventory-full", "&cYour inventory is full."),
         REWARD_ERROR("reward-error", "&cYour reward of %prefix%%prize%%suffix% has failed to process. Contact an admin, this has been logged."),
-        PURCHASE_SUCCESS("purchase-success", "&6You have purchased %item%&6 for &c%prefix%%price%%suffix%&6."),
-        PURCHASE_FAIL("purchase-fail", "&cYou do not have &c%prefix%%price%%suffix%&6."),
-        PURCHASE_ERROR("purchase-ERROR", "&cCould not complete transaction for %item%&c."),
-        SHOP_DISABLED("shop-disabled", "&cThe pouch shop is disabled."),
         NO_PERMISSION("no-permission", "&cYou cannot open this pouch."),
-        KILL_HOLO("kill-holo", "Pouch hologram removed.");
+        RELOADED("reloaded", "&fMoneyPouchDeluxe has been reloaded.");
 
         private String id;
         private String def; // (default message if undefined)

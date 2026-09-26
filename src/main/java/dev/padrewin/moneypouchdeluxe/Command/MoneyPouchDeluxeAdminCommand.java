@@ -1,6 +1,6 @@
 package dev.padrewin.moneypouchdeluxe.Command;
 
-import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import dev.padrewin.moneypouchdeluxe.EconomyType.EconomyType;
@@ -20,11 +20,9 @@ import java.util.*;
 public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabCompleter {
 
     private final MoneyPouchDeluxe plugin;
-    private final HologramHandler hologramHandler;
 
-    public MoneyPouchDeluxeAdminCommand(MoneyPouchDeluxe plugin, HologramHandler hologramHandler) {
+    public MoneyPouchDeluxeAdminCommand(MoneyPouchDeluxe plugin) {
         this.plugin = plugin;
-        this.hologramHandler = hologramHandler;
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -46,35 +44,7 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
                 return true;
             } else if (args[0].equals("reload")) {
                 plugin.reload();
-                String reloadMessage = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("messages.reloaded")));
-                sender.sendMessage(reloadMessage);
-                return true;
-            } else if (args[0].equals("killholo")) {
-                for (World world : Bukkit.getWorlds()) {
-                    for (Entity entity : world.getEntities()) {
-                        if (entity instanceof LivingEntity) {
-                            LivingEntity livingEntity = (LivingEntity) entity;
-                            if (livingEntity.getPersistentDataContainer().has(new NamespacedKey(plugin, "is_hologram"), PersistentDataType.BYTE)) {
-                                livingEntity.remove();
-                            }
-                        }
-                    }
-                }
-                String hologramsRemovedMessage = plugin.getMessage(MoneyPouchDeluxe.Message.KILL_HOLO);
-                sender.sendMessage(hologramsRemovedMessage);
-                return true;
-            } else if (args[0].equals("toggleholo")) {
-                boolean enabled = plugin.areHologramsEnabled();
-                plugin.setHologramsEnabled(!enabled);
-
-                if (!enabled) {
-                    hologramHandler.killAllPouchHolograms();
-                }
-
-                String messageKey = enabled ? "messages.holograms_disabled" : "messages.holograms_enabled";
-                String message = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString(messageKey)));
-
-                sender.sendMessage(message);
+                Text.send(sender, plugin.getMessage(MoneyPouchDeluxe.Message.RELOADED));
                 return true;
             }
         }
@@ -83,12 +53,9 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
         sender.sendMessage(ChatColor.GRAY + "<> = required, [] = optional");
         sender.sendMessage(ChatColor.YELLOW + "/mpa | /cpa :" + ChatColor.GRAY + " view this menu");
         sender.sendMessage(ChatColor.YELLOW + "/mp (/cp) <tier> [player] [amount] :" + ChatColor.GRAY + " give <item> to [player] (or self if blank)");
-        sender.sendMessage(ChatColor.YELLOW + "/mpshop | /cpshop :" + ChatColor.GRAY + " open the shop");
         sender.sendMessage(ChatColor.YELLOW + "/mpa list | /cpa list :" + ChatColor.GRAY + " list all pouches");
         sender.sendMessage(ChatColor.YELLOW + "/mpa economies | /cpa economies :" + ChatColor.GRAY + " list all economies");
-        sender.sendMessage(ChatColor.YELLOW + "/mpa reload | /cpa rload :" + ChatColor.GRAY + " reload the config");
-        sender.sendMessage(ChatColor.YELLOW + "/mpa killholo | /cpa killholo :" + ChatColor.GRAY + " kill holo made by plugin");
-        sender.sendMessage(ChatColor.YELLOW + "/mpa toggleholo | /cpa toggleholo:" + ChatColor.GRAY + " enable or disable holograms for pouches");
+        sender.sendMessage(ChatColor.YELLOW + "/mpa reload | /cpa reload :" + ChatColor.GRAY + " reload the config");
         return true;
     }
 
@@ -96,7 +63,7 @@ public class MoneyPouchDeluxeAdminCommand implements CommandExecutor, TabComplet
     public List<String> onTabComplete(CommandSender sender, Command command, String s, String[] args) {
         if (sender instanceof Player) {
             if (args.length == 1) {
-                List<String> options = Arrays.asList("list", "economies", "reload", "killholo", "toggleholo");
+                List<String> options = Arrays.asList("list", "economies", "reload");
                 List<String> completions = new ArrayList<>();
                 StringUtil.copyPartialMatches(args[0], options, completions);
                 Collections.sort(completions);

@@ -1,13 +1,13 @@
 package dev.padrewin.moneypouchdeluxe.Listener;
 
-import org.black_ixx.playerpoints.PlayerPoints;
-import org.black_ixx.playerpoints.PlayerPointsAPI;
+import java.util.concurrent.ConcurrentHashMap;
+
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import org.bukkit.*;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
-import dev.padrewin.moneypouchdeluxe.EconomyType.InvalidEconomyType;
 import dev.padrewin.moneypouchdeluxe.Title.Title_Other;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -20,12 +20,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import dev.padrewin.colddev.scheduler.task.ScheduledTask;
 
 import java.lang.reflect.Field;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -34,7 +35,7 @@ import java.util.logging.Level;
 public class UseListener implements Listener {
 
     protected final MoneyPouchDeluxe plugin;
-    protected final Set<UUID> opening = new HashSet<>();
+    protected final Set<UUID> opening = ConcurrentHashMap.newKeySet();
 
     public UseListener(MoneyPouchDeluxe plugin) {
         this.plugin = plugin;
@@ -68,6 +69,9 @@ public class UseListener implements Listener {
 
             if (itemPouchId != null && itemPouchId.equals(pouchId)) {
                 event.setCancelled(true);
+                if (!canOpen(player, pouch)) {
+                    return;
+                }
                 usePouch(player, pouch);
                 removeOrReduceItem(player);
                 pouchMatched = true;
@@ -120,36 +124,34 @@ public class UseListener implements Listener {
         }
     }
 
-    private void processPouchEvent(Player player, Pouch pouch, Cancellable event) {
-        event.setCancelled(true);
-        player.sendMessage("Processing pouch event for: " + pouch.getId());
-
-        if (pouch.getEconomyType() instanceof InvalidEconomyType
-                && plugin.getConfig().getBoolean("error-handling.prevent-opening-invalid-pouches", true)) {
-            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.INVALID_POUCH));
-            return;
-        }
-
+    /**
+     * Checks shared by every way of opening a pouch. Tells the player why when it can't be opened.
+     */
+    protected boolean canOpen(Player player, Pouch pouch) {
         if (opening.contains(player.getUniqueId())) {
-            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.ALREADY_OPENING));
-            return;
+            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.ALREADY_OPENING));
+            return false;
         }
 
-        String permission = pouch.getPermission(); // Ia permisiunea din pouch
+        String permission = pouch.getPermission();
         if (pouch.isPermissionRequired() && (permission == null || !player.hasPermission(permission))) {
-            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
-            event.setCancelled(true); // Anulează interacțiunea
-            return;
+            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
+            return false;
         }
+        return true;
+    }
 
-        if (player.getItemInHand().getAmount() == 1) {
-            player.setItemInHand(null);
-        } else {
-            player.getItemInHand().setAmount(player.getItemInHand().getAmount() - 1);
-            player.updateInventory();
+    /**
+     * Groups the digits with the configured separator (e.g. 1,924,281 or 1.924.281),
+     * independent of the server's locale.
+     */
+    public static String formatNumber(long value, String separator) {
+        if (separator == null || separator.isEmpty()) {
+            return String.valueOf(value);
         }
-
-        usePouch(player, pouch);
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+        symbols.setGroupingSeparator(separator.charAt(0));
+        return new DecimalFormat("#,###", symbols).format(value);
     }
 
     protected void playSound(Player player, String name) {
@@ -159,18 +161,19 @@ public class UseListener implements Listener {
     }
 
     protected void usePouch(Player player, Pouch pouch) {
-        long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange());
+        // + 1: nextLong's upper bound is exclusive, and the configured maximum must be winnable
+        long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange() + 1);
         playSound(player, plugin.getConfig().getString("pouches.sound.opensound"));
 
         PaymentRunnable paymentRunnable = new PaymentRunnable(plugin, random, player, pouch);
         if (plugin.getTitleHandle() instanceof Title_Other) {
             paymentRunnable.pay();
         } else {
-            paymentRunnable.runTaskTimer(plugin, 10, plugin.getConfig().getInt("pouches.title.speed-in-tick"));
+            paymentRunnable.start(10, plugin.getConfig().getInt("pouches.title.speed-in-tick"));
         }
     }
 
-    private class PaymentRunnable extends BukkitRunnable {
+    private class PaymentRunnable implements Runnable {
 
         private final Player player;
         private final Pouch pouch;
@@ -182,6 +185,7 @@ public class UseListener implements Listener {
         private final String obfuscateColour;
         private final String obfuscateDigitChar;
         private final String obfuscateDelimiterChar;
+        private final String separator;
         private final boolean delimiter;
         private final boolean revealComma;
         private final String number;
@@ -189,6 +193,7 @@ public class UseListener implements Listener {
 
         private int position;
         private boolean paid;
+        private ScheduledTask task;
 
         public PaymentRunnable(MoneyPouchDeluxe plugin, long payment, Player player, Pouch pouch) {
             opening.add(player.getUniqueId());
@@ -197,20 +202,27 @@ public class UseListener implements Listener {
             this.payment = payment;
             this.pouch = pouch;
 
-            this.prefixColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.prefix-colour"));
-            this.suffixColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.suffix-colour"));
-            this.revealColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.reveal-colour"));
-            this.obfuscateColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.obfuscate-colour"));
+            this.prefixColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.prefix-colour", ""));
+            this.suffixColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.suffix-colour", ""));
+            this.revealColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.reveal-colour", ""));
+            this.obfuscateColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.obfuscate-colour", ""));
             this.obfuscateDigitChar = plugin.getConfig().getString("pouches.title.obfuscate-digit-char", "#");
-            this.obfuscateDelimiterChar = ",";
+            this.separator = plugin.getConfig().getString("pouches.title.format.separator", ",");
+            this.obfuscateDelimiterChar = plugin.getConfig().getString("pouches.title.obfuscate-format-char", separator);
             this.delimiter = plugin.getConfig().getBoolean("pouches.title.format.enabled", false);
             this.revealComma = plugin.getConfig().getBoolean("pouches.title.format.reveal-comma", false);
-            this.number = (delimiter ? (new DecimalFormat("#,###").format(payment)) : String.valueOf(payment));
+            this.number = delimiter ? formatNumber(payment, separator) : String.valueOf(payment);
             this.reversePouchReveal = plugin.getConfig().getBoolean("reverse-pouch-reveal");
+        }
+
+        public void start(long delay, long period) {
+            // Runs on the player's own thread (Folia). If Folia drops the task because the player
+            // left mid-reveal, stop() still pays them, just like the online check below does on Paper.
+            this.task = plugin.getScheduler().runTaskTimerAtEntity(player, this, this::stop, delay, period);
         }
 
         @Override
@@ -221,9 +233,9 @@ public class UseListener implements Listener {
             }
 
             playSound(player, plugin.getConfig().getString("pouches.sound.revealsound"));
-            String prefix = prefixColour + pouch.getEconomyType().getPrefix();
+            String prefix = prefixColour + Text.color(pouch.getEconomyType().getPrefix());
             StringBuilder viewedTitle = new StringBuilder();
-            String suffix = suffixColour + pouch.getEconomyType().getSuffix();
+            String suffix = suffixColour + Text.color(pouch.getEconomyType().getSuffix());
             for (int i = 0; i < position; i++) {
                 if (reversePouchReveal) {
                     viewedTitle.insert(0, number.charAt(number.length() - i - 1)).insert(0, revealColour);
@@ -232,29 +244,29 @@ public class UseListener implements Listener {
                 }
                 if ((i == (position - 1)) && (position != number.length())
                         && (reversePouchReveal
-                        ? (revealComma && (number.charAt(number.length() - i - 1)) == ',')
-                        : (revealComma && (number.charAt(i + 1)) == ','))) {
+                        ? (revealComma && isSeparator(number.charAt(number.length() - i - 1)))
+                        : (revealComma && isSeparator(number.charAt(i + 1))))) {
                     position++;
                 }
             }
             for (int i = position; i < number.length(); i++) {
                 if (reversePouchReveal) {
                     char at = number.charAt(number.length() - i - 1);
-                    if (at == ',')  {
+                    if (isSeparator(at)) {
                         if (revealComma) {
                             viewedTitle.insert(0, at).insert(0, revealColour);
                         } else viewedTitle.insert(0, obfuscateDelimiterChar).insert(0, ChatColor.MAGIC).insert(0, obfuscateColour);
                     } else viewedTitle.insert(0, obfuscateDigitChar).insert(0, ChatColor.MAGIC).insert(0, obfuscateColour);;
                 } else {
                     char at = number.charAt(i);
-                    if (at == ',') {
+                    if (isSeparator(at)) {
                         if (revealComma) viewedTitle.append(revealColour).append(at);
                         else viewedTitle.append(obfuscateColour).append(ChatColor.MAGIC).append(obfuscateDelimiterChar);
                     } else viewedTitle.append(obfuscateColour).append(ChatColor.MAGIC).append(obfuscateDigitChar);
                 }
             }
             plugin.getTitleHandle().sendTitle(player, prefix + viewedTitle + suffix,
-                    ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("pouches.title.subtitle")));
+                    Text.color(plugin.getConfig().getString("pouches.title.subtitle", "")));
             position++;
 
             if (position > number.length()) {
@@ -262,8 +274,12 @@ public class UseListener implements Listener {
             }
         }
 
+        private boolean isSeparator(char c) {
+            return !Character.isDigit(c);
+        }
+
         public void stop() {
-            this.cancel();
+            if (this.task != null) this.task.cancel();
             pay();
         }
 
@@ -278,10 +294,8 @@ public class UseListener implements Listener {
 
                 if (player.isOnline()) {
                     playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
-                    player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE)
-                            .replace("%prefix%", pouch.getEconomyType().getPrefix())
-                            .replace("%suffix%", pouch.getEconomyType().getSuffix())
-                            .replace("%prize%", NumberFormat.getInstance().format(payment)));
+                    Text.send(player, pouch.getEconomyType().applyPlaceholders(
+                            plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE), formatNumber(payment, separator)));
                 }
 
             } catch (Throwable t) {
@@ -294,12 +308,10 @@ public class UseListener implements Listener {
 
                 if (player.isOnline()) {
                     if (plugin.getConfig().getBoolean("error-handling.refund-pouch", false)) {
-                        player.getInventory().addItem(pouch.getItemStack());
+                        plugin.giveOrDrop(player, pouch.getItemStack().clone());
                     }
-                    player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.REWARD_ERROR)
-                            .replace("%prefix%", pouch.getEconomyType().getPrefix())
-                            .replace("%suffix%", pouch.getEconomyType().getSuffix())
-                            .replace("%prize%", NumberFormat.getInstance().format(payment)));
+                    Text.send(player, pouch.getEconomyType().applyPlaceholders(
+                            plugin.getMessage(MoneyPouchDeluxe.Message.REWARD_ERROR), formatNumber(payment, separator)));
                 }
             }
         }

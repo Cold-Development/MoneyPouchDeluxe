@@ -1,5 +1,7 @@
 package dev.padrewin.moneypouchdeluxe.ItemGetter;
 
+import dev.padrewin.moneypouchdeluxe.hook.NexoHook;
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import org.bukkit.Bukkit;
@@ -53,30 +55,29 @@ public class ItemGetterLatest implements ItemGetter {
         boolean hasAttributeModifiers = config.contains(path + ".attributemodifiers");
         List<Map<?, ?>> cAttributeModifiers = config.getMapList(path + ".attributemodifiers");
 
-        String name;
         Material type = null;
         int data = 0;
 
-        // lore
-        List<String> lore = new ArrayList<>();
-        if (cLore != null) {
-            for (String s : cLore) {
-                lore.add(ChatColor.translateAlternateColorCodes('&', s));
+        // material, or a Nexo custom item written as "nexo:<id>"
+        ItemStack is = null;
+        if (cType.regionMatches(true, 0, "nexo:", 0, 5)) {
+            is = NexoHook.buildItem(cType.substring(5));
+            if (is == null) {
+                plugin.getLogger().warning("Unrecognised Nexo item: " + cType + " (is Nexo installed and loaded?)");
+                type = Material.STONE;
+            }
+        } else {
+            try {
+                type = Material.valueOf(cType);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Unrecognised material: " + cType);
+                type = Material.STONE;
             }
         }
 
-        // name
-        name = ChatColor.translateAlternateColorCodes('&', cName);
-
-        // material
-        try {
-            type = Material.valueOf(cType);
-        } catch (Exception e) {
-            plugin.getLogger().warning("Unrecognised material: " + cType);
-            type = Material.STONE;
+        if (is == null) {
+            is = new ItemStack(type, 1, (short) data);
         }
-
-        ItemStack is = new ItemStack(type, 1, (short) data);
         ItemMeta ism = is.getItemMeta();
 
         // skull
@@ -112,8 +113,8 @@ public class ItemGetterLatest implements ItemGetter {
             }
         }
 
-        ism.setLore(lore);
-        ism.setDisplayName(name);
+        Text.setLore(ism, cLore != null ? cLore : new ArrayList<>());
+        Text.setDisplayName(ism, cName);
 
         // custom model data
         if (hasCustomModelData) {

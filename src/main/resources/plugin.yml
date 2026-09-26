@@ -3,22 +3,18 @@ version: ${version}
 main: dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe
 author: padrewin
 website: 'https://github.com/Cold-Development/MoneyPouchDeluxe'
-softdepend: [Vault, TokenManager, LemonMobCoins, PlayerPoints, PremiumPoints, ColdBits]
-api-version: "1.13"
+softdepend: [Nexo]
+api-version: "1.16"
+folia-supported: true
 commands:
   moneypouch:
     description: Main command for MoneyPouchDeluxe
     usage: /coldpouch | /moneypouch
     permission: moneypouch.admin
     aliases: [cp, mp]
-  moneypouchshop:
-    description: Shop command for MoneyPouchDeluxe
-    usage: /moneypouchshop | /coldpouchshop
-    permission: moneypouch.shop
-    aliases: [cpshop, mpshop]
   moneypouchadmin:
     description: Admin command for MoneyPouchDeluxe
-    usage: /coldpouchshop | /moneypouchshop
+    usage: /moneypouchadmin | /mpa | /cpa
     permission: moneypouch.admin
     aliases: [cpa, mpa]
 

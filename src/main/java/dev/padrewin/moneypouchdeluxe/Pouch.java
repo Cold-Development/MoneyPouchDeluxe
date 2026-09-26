@@ -15,44 +15,23 @@ public class Pouch {
     private final long maxRange;
     private final ItemStack itemStack;
     private final EconomyType economyType;
-    private final boolean purchasable;
-    private final EconomyType purchaseCurrency;
-    private final long purchasePrice;
-    private final ItemStack shopItemStack;
     private final boolean permissionRequired;
     private UUID uuid;
-    private String permission = null; // Permisiunea necesară pentru folosire
+    private final String permission;
 
-    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, boolean permissionRequired, String pouchId) {
+    /**
+     * @param permission permission needed to open the pouch, or null if anyone can open it
+     */
+    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType, String permission) {
         this.id = id;
-        this.minRange = minRange >= maxRange ? maxRange - 1 : minRange;
-        this.maxRange = maxRange;
+        // Both ends are inclusive; from == to makes a fixed-amount pouch
+        this.minRange = Math.min(minRange, maxRange);
+        this.maxRange = Math.max(minRange, maxRange);
         this.itemStack = itemStack;
         this.economyType = economyType;
-        this.permissionRequired = permissionRequired;
-        this.purchasable = false;
-        this.purchaseCurrency = null;
-        this.purchasePrice = 0;
-        this.shopItemStack = null;
+        this.permissionRequired = permission != null;
         this.permission = permission;
-        applyUUIDToItemStack(pouchId);
-    }
-
-    public Pouch(String id, long minRange, long maxRange, ItemStack itemStack, EconomyType economyType,
-                 boolean permissionRequired, String permission, boolean purchasable, EconomyType purchaseCurrency,
-                 long purchasePrice, ItemStack shopItemStack, String pouchId) {
-        this.id = id;
-        this.minRange = minRange >= maxRange ? maxRange - 1 : minRange;
-        this.maxRange = maxRange;
-        this.itemStack = itemStack;
-        this.economyType = economyType;
-        this.permissionRequired = permissionRequired;
-        this.permission = permission; // Stochează permisiunea
-        this.purchasable = purchasable;
-        this.purchaseCurrency = purchaseCurrency;
-        this.purchasePrice = purchasePrice;
-        this.shopItemStack = shopItemStack;
-        applyUUIDToItemStack(pouchId);
+        applyUUIDToItemStack(id);
     }
 
     public String getId() {
@@ -88,18 +67,6 @@ public class Pouch {
         return permissionRequired;
     }
 
-    public boolean isPurchasable() {
-        return purchasable;
-    }
-
-    public EconomyType getPurchaseCurrency() {
-        return purchaseCurrency;
-    }
-
-    public long getPurchasePrice() {
-        return purchasePrice;
-    }
-
     public long getMinRange() {
         return minRange;
     }
@@ -110,10 +77,6 @@ public class Pouch {
 
     public ItemStack getItemStack() {
         return itemStack;
-    }
-
-    public ItemStack getShopItemStack() {
-        return shopItemStack;
     }
 
     public EconomyType getEconomyType() {

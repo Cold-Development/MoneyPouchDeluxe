@@ -1,7 +1,7 @@
 package dev.padrewin.moneypouchdeluxe.Command;
 
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import dev.padrewin.moneypouchdeluxe.CustomHeadManager;
-import dev.padrewin.moneypouchdeluxe.Exception.HologramHandler;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import org.bukkit.Bukkit;
@@ -68,24 +68,17 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
                 }
 
                 for (Player online : Bukkit.getOnlinePlayers()) {
-
                     ItemStack stackToAdd = pouch.getItemStack().clone();
                     stackToAdd.setAmount(amount);
 
-                    if (stackToAdd.getType() == Material.PLAYER_HEAD
-                            && plugin.getConfig().contains("pouches." + pouch.getId() + ".texture-url")) {
-
-                        String textureURL = plugin.getConfig().getString("pouches." + pouch.getId() + ".texture-url");
-                        stackToAdd = CustomHeadManager.getCustomSkull(textureURL);
-                        stackToAdd.setAmount(amount);
+                    if (plugin.giveOrDrop(online, stackToAdd)) {
+                        Text.send(online, plugin.getMessage(MoneyPouchDeluxe.Message.PLAYER_FULL_INV));
                     }
-
-                    online.getInventory().addItem(stackToAdd);
                 }
 
-                sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
+                Text.send(sender, plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
                         .replace("%player%", "everyone")
-                        .replace("%item%", pouch.getItemStack().getItemMeta().getDisplayName()));
+                        .replace("%item%", plugin.getPouchName(pouch)));
 
                 return true;
             }
@@ -130,52 +123,20 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
             ItemStack stackToAdd = pouch.getItemStack().clone();
             stackToAdd.setAmount(amount);
 
-            if (stackToAdd.getType() == Material.PLAYER_HEAD && plugin.getConfig().contains("pouches." + pouch.getId() + ".texture-url")) {
-                String textureURL = plugin.getConfig().getString("pouches." + pouch.getId() + ".texture-url");
-                //Bukkit.getLogger().info("[DEBUG] Applying texture for pouch: " + pouch.getId() + " with URL: " + textureURL);
-
-                stackToAdd = CustomHeadManager.getCustomSkull(textureURL);
-                stackToAdd.setAmount(amount);
-            }
-
-
-            HashMap<Integer, ItemStack> leftover = target.getInventory().addItem(stackToAdd);
-
-            int added = amount;
-            for (ItemStack item : leftover.values()) {
-                added -= item.getAmount();
-            }
-
-            if (!leftover.isEmpty()) {
-                int totalLeftover = 0;
-                for (ItemStack item : leftover.values()) {
-                    totalLeftover += item.getAmount();
-                }
-
-                for (ItemStack item : leftover.values()) {
-                    Item droppedItem = target.getWorld().dropItemNaturally(target.getLocation(), item);
-
-                    if (!isStackerPluginDetected()) {
-                        HologramHandler.createHologram(droppedItem, plugin);
-                    }
-
-                    droppedItem.setPickupDelay(40);
-                    droppedItem.setOwner(null);
-                }
-
-                sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.FULL_INV)
+            if (plugin.giveOrDrop(target, stackToAdd)) {
+                Text.send(sender, plugin.getMessage(MoneyPouchDeluxe.Message.FULL_INV)
                         .replace("%player%", target.getName()));
-                target.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PLAYER_FULL_INV));
+                Text.send(target, plugin.getMessage(MoneyPouchDeluxe.Message.PLAYER_FULL_INV));
             }
 
-            sender.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
+            Text.send(sender, plugin.getMessage(MoneyPouchDeluxe.Message.GIVE_ITEM)
                     .replace("%player%", target.getName())
-                    .replace("%item%", pouch.getItemStack().getItemMeta().getDisplayName()));
+                    .replace("%item%", plugin.getPouchName(pouch)));
 
             if (plugin.getConfig().getBoolean("options.show-receive-message", true)) {
-                target.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.RECEIVE_ITEM)
+                Text.send(target, plugin.getMessage(MoneyPouchDeluxe.Message.RECEIVE_ITEM)
                         .replace("%player%", target.getName())
-                        .replace("%item%", pouch.getItemStack().getItemMeta().getDisplayName()));
+                        .replace("%item%", plugin.getPouchName(pouch)));
             }
 
             return true;
@@ -185,12 +146,9 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
         sender.sendMessage(ChatColor.GRAY + "<> = required, [] = optional");
         sender.sendMessage(ChatColor.YELLOW + "/mp | /cp :" + ChatColor.GRAY + " view this menu");
         sender.sendMessage(ChatColor.YELLOW + "/mp | /cp <tier> [player] [amount] :" + ChatColor.GRAY + " give <item> to [player] (or self if blank)");
-        sender.sendMessage(ChatColor.YELLOW + "/mpshop | /cpshop :" + ChatColor.GRAY + " open the shop");
         sender.sendMessage(ChatColor.YELLOW + "/mpa list | /cpa list :" + ChatColor.GRAY + " list all pouches");
         sender.sendMessage(ChatColor.YELLOW + "/mpa economies | /cpa economies :" + ChatColor.GRAY + " list all economies");
         sender.sendMessage(ChatColor.YELLOW + "/mpa reload | /cpa reload :" + ChatColor.GRAY + " reload the config");
-        sender.sendMessage(ChatColor.YELLOW + "/mpa killholo | /cpa killholo :" + ChatColor.GRAY + " kill holo made by plugin");
-        sender.sendMessage(ChatColor.YELLOW + "/mpa toggleholo | /cpa toggleholo:" + ChatColor.GRAY + " enable or disable holograms for pouches");
 
         return true;
     }
@@ -212,22 +170,4 @@ public class MoneyPouchDeluxeBaseCommand implements CommandExecutor, TabComplete
         return null;
     }
 
-    private boolean isStackerPluginDetected() {
-        String[] stackerPlugins = {
-                "RoseStacker",
-                "WildStacker",
-                "EpicStacker",
-                "LagAssist",
-                "SimpleStack",
-                "StackMob",
-                "Stacker"
-        };
-
-        for (String pluginName : stackerPlugins) {
-            if (Bukkit.getPluginManager().getPlugin(pluginName) != null) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

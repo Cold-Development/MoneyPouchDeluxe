@@ -1,5 +1,7 @@
 package dev.padrewin.moneypouchdeluxe;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import org.bukkit.Bukkit;
@@ -13,7 +15,7 @@ import java.util.UUID;
 
 public class CustomHead {
 
-    private static final Map<UUID, PlayerProfile> profileCache = new HashMap<>();
+    private static final Map<UUID, PlayerProfile> profileCache = new ConcurrentHashMap<>();
 
     public static ItemStack getCustomSkull(String textureURL) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD, 1);

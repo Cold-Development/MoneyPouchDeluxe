@@ -1,5 +1,6 @@
 package dev.padrewin.moneypouchdeluxe.Listener;
 
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
 import org.bukkit.Material;
@@ -46,24 +47,13 @@ public class UseListenerLatest extends UseListener implements Listener {
             // Iterează prin pouch-uri și verifică permisiunea
             for (Pouch pouch : plugin.getPouches()) {
                 if (pouch.getId().equalsIgnoreCase(pouchId)) {
-                    // Verifică permisiunea
-                    if (pouch.isPermissionRequired()) {
-                        String permission = pouch.getPermission();
-                        //plugin.getLogger().info("Checking permission for pouch: " + pouch.getId());
-                        //plugin.getLogger().info("PermissionRequired: " + pouch.isPermissionRequired() + ", Permission: " + permission);
-                        //plugin.getLogger().info("Player " + player.getName() + " has permission: " + player.hasPermission(permission));
-
-                        if (permission == null || !player.hasPermission(permission)) {
-                            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
-                            event.setCancelled(true);
-                            //plugin.getLogger().info("Player " + player.getName() + " does not have permission for pouch: " + pouch.getId());
-                            return;
-                        }
+                    event.setCancelled(true);
+                    if (!canOpen(player, pouch)) {
+                        return;
                     }
 
                     // Dacă are permisiunea, continuă utilizarea pouch-ului
                     usePouch(player, pouch);
-                    event.setCancelled(true);
 
                     // Elimină pouch-ul din inventar
                     ItemStack itemToRemove = player.getInventory().getItemInMainHand();
@@ -78,6 +68,10 @@ public class UseListenerLatest extends UseListener implements Listener {
                     return;
                 }
             }
+
+            // A pouch whose tier was removed from pouches.yml: don't let it be placed or used as a normal item
+            event.setCancelled(true);
+            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.INVALID_POUCH));
         }
     }
 
