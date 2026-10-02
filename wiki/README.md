@@ -1,10 +1,7 @@
 # Wiki sources
 
 These are the pages of the [GitHub wiki](https://github.com/Cold-Development/MoneyPouchDeluxe/wiki).
-To publish them, copy them into the wiki repository and push:
 
-```
-git clone https://github.com/Cold-Development/MoneyPouchDeluxe.wiki.git
-cp wiki/*.md MoneyPouchDeluxe.wiki/ && rm MoneyPouchDeluxe.wiki/README.md
-cd MoneyPouchDeluxe.wiki && git add -A && git commit -m "Update wiki" && git push
-```
+Edit them here: when a change to this folder reaches `master`, the **Publish Wiki** workflow
+(`.github/workflows/publish-wiki.yml`) copies them to the wiki automatically.
+It can also be run by hand from the Actions tab.
