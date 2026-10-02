@@ -77,6 +77,65 @@ but you can also reuse a permission that your ranks already have, so you don't n
 
 Several pouches can share the same node, e.g. all VIP pouches use `moneypouch.vip`.
 
+### A permission for each pouch, step by step
+
+The plugin **doesn't create the node for you**: for every pouch you want to restrict, you write it yourself. Using the pouch id keeps it easy to remember.
+
+**1. Find the pouch id.** It's the name of the block in `pouches.yml` (the line with no indentation), and it's what `/mpa list` shows at the start of each line:
+
+```yaml
+pointspouch:        # ← the pouch id is "pointspouch"
+  name: "&6&lPoints Pouch"
+  ...
+```
+
+**2. Build the node:** `moneypouch.pouches.` + the pouch id, **written exactly the same**.
+
+| Pouch id in `pouches.yml` | Node to write in `permission-required` |
+|---|---|
+| `moneypouch` | `moneypouch.pouches.moneypouch` |
+| `pointspouch` | `moneypouch.pouches.pointspouch` |
+| `xppouch` | `moneypouch.pouches.xppouch` |
+| `vip-pouch` | `moneypouch.pouches.vip-pouch` |
+
+**3. Write it under that pouch's `options:`**, replacing any existing `permission-required` line (there must be only one):
+
+```yaml
+moneypouch:
+  ...
+  options:
+    economytype: "VAULT"
+    permission-required: moneypouch.pouches.moneypouch
+
+pointspouch:
+  ...
+  options:
+    economytype: "PlayerPoints"
+    permission-required: moneypouch.pouches.pointspouch   # was "false" in the default file
+
+xppouch:
+  ...
+  options:
+    economytype: "XP"
+    permission-required: moneypouch.pouches.xppouch
+```
+
+**4. `/mpa reload`.**
+
+**5. Give each node to whoever should open that pouch** (the same node as in step 3):
+
+```
+/lp group default permission set moneypouch.pouches.moneypouch true
+/lp group vip     permission set moneypouch.pouches.pointspouch true
+/lp group mvp     permission set moneypouch.pouches.xppouch true
+```
+
+**6. Test with a non-OP account**: a player without the node gets `no-permission` and keeps the pouch.
+
+> 💡 The node in `pouches.yml` and the one in your permission plugin must match **character for character**. A typo (`moneypouch.pouch.xppouch`, `moneypouches.pouches.xppouch`) means nobody (except OPs) can open the pouch.
+
+> 💡 If you rename a pouch id, the node doesn't change by itself. Update `permission-required` and the permission you gave, or keep the old node: any node works, it just has to match on both sides.
+
 ### ❌ Don't write `true`
 
 ```yaml

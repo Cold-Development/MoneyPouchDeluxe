@@ -121,7 +121,7 @@ Then give that permission to the players or the group, e.g. with LuckPerms:
 /lp group vip permission set moneypouch.pouches.goldpouch true
 ```
 
-Everything about this (and the common mistakes) is on **[Pouch Permissions](Pouch-Permissions)**.
+Use `moneypouch.pouches.` + **your pouch id**, written exactly like the id. A permission for each pouch, step by step: **[Pouch Permissions](Pouch-Permissions#a-permission-for-each-pouch-step-by-step)**.
 
 ## Step 7 (optional): Make it look nicer
 

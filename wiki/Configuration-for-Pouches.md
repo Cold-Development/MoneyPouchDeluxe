@@ -192,7 +192,7 @@ The permission a player needs to **open** the pouch.
 | `some.permission.node` | Only players with `some.permission.node` (and OPs) |
 | `true` | ❌ Don't. Looks for a permission literally called `true`. |
 
-It must be **under `options:`**, at the same indentation as `economytype`. Full guide: [Pouch Permissions](Pouch-Permissions).
+It must be **under `options:`**, at the same indentation as `economytype`. Recommended node: `moneypouch.pouches.<pouch id>`. Full guide: [A permission for each pouch, step by step](Pouch-Permissions#a-permission-for-each-pouch-step-by-step).
 
 ## `lore`
 
