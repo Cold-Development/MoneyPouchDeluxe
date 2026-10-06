@@ -100,8 +100,7 @@ public class LocaleManager extends AbstractLocaleManager {
     }
 
     /**
-     * Coloured through {@link Text#color}, which handles a gradient followed by a placeholder that
-     * brings its own colour (an economy prefix like {@code &a$}) and glyphs inside gradients.
+     * Coloured through {@link Text#color}, which keeps Nexo glyphs working inside gradients.
      */
     @Override
     public String getLocaleMessage(String messageKey, StringPlaceholders stringPlaceholders) {

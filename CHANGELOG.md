@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.1
+
+### Fixed
+- When ColdDev adds a setting to `config.yml` (the language, the database settings) or a message to a `locale/` file, the comments at the end of lines and the formatting of your files are kept.
+- Command messages in a custom language fall back to English instead of "Missing locale string".
+- The comments in `commands/moneypouchdeluxe.yml` mentioned `/bits reload`.
+- Gradients followed directly by a color are handled by ColdDev itself (built on ColdDev 1.5.6).
+
 ## 2.0.0
 
 Everything from 1.x is migrated automatically on the first start: messages, pouches and settings keep your values and comments.

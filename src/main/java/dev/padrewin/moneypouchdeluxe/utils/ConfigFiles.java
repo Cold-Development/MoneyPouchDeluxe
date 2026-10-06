@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Edits YAML files line by line instead of loading and re-saving them, so everything the owner wrote
  * (comments, including the ones at the end of a line, spacing, quotes) stays exactly as it was.
- * Understands the block style YAML of the plugin's own files (keys, nested sections, lists).
+ * Used by the migrations to remove old sections; adding new settings is done by ColdDev's ConfigUpdater.
  */
 public final class ConfigFiles {
 
@@ -42,7 +42,7 @@ public final class ConfigFiles {
     /**
      * Where a key is in a file: its comment block, its own line and everything under it.
      */
-    static final class Block {
+    private static final class Block {
         final int commentStart; // first line of the comments directly above the key (= keyLine if none)
         final int keyLine;
         final int end;          // index after the last line of the block
@@ -60,7 +60,7 @@ public final class ConfigFiles {
      * @param path a key path such as {@code pouches.title.format}
      * @return where the key is, or null if the file doesn't have it
      */
-    static Block findBlock(List<String> lines, String path) {
+    private static Block findBlock(List<String> lines, String path) {
         String[] keys = path.split("\\.");
 
         int from = 0;
@@ -95,7 +95,7 @@ public final class ConfigFiles {
     /**
      * @return the first line of the comments directly above the key, at the same indentation
      */
-    static int commentStart(List<String> lines, int keyLine, int indent) {
+    private static int commentStart(List<String> lines, int keyLine, int indent) {
         int start = keyLine;
         while (start > 0 && lines.get(start - 1).trim().startsWith("#") && indentOf(lines.get(start - 1)) == indent) {
             start--;
@@ -109,7 +109,7 @@ public final class ConfigFiles {
      * which may sit at the key's own indentation. Blank lines right before that line are left outside,
      * so the spacing between sections is kept.
      */
-    static int blockEnd(List<String> lines, int start, int indent) {
+    private static int blockEnd(List<String> lines, int start, int indent) {
         int end = start + 1;
         while (end < lines.size()) {
             String line = lines.get(end);
@@ -128,7 +128,7 @@ public final class ConfigFiles {
     /**
      * @return the indentation of the first key in the range, or -1 if there's none
      */
-    static int childIndent(List<String> lines, int from, int to) {
+    private static int childIndent(List<String> lines, int from, int to) {
         for (int i = from; i < to; i++) {
             String line = lines.get(i);
             if (!line.isBlank() && !line.trim().startsWith("#") && !line.trim().startsWith("- ")) {
@@ -138,26 +138,7 @@ public final class ConfigFiles {
         return -1;
     }
 
-    /**
-     * @return the key on this line ({@code key: value} or {@code key:}), or null if it isn't a key line
-     */
-    static String keyOf(String line) {
-        String trimmed = line.trim();
-        if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("- ")) {
-            return null;
-        }
-        int colon = trimmed.indexOf(':');
-        if (colon <= 0 || (colon + 1 < trimmed.length() && trimmed.charAt(colon + 1) != ' ')) {
-            return null;
-        }
-        String key = trimmed.substring(0, colon).trim();
-        if (key.length() >= 2 && (key.startsWith("\"") && key.endsWith("\"") || key.startsWith("'") && key.endsWith("'"))) {
-            key = key.substring(1, key.length() - 1);
-        }
-        return key;
-    }
-
-    static int indentOf(String line) {
+    private static int indentOf(String line) {
         int indent = 0;
         while (indent < line.length() && line.charAt(indent) == ' ') {
             indent++;
@@ -178,14 +159,14 @@ public final class ConfigFiles {
         return rest.startsWith(":");
     }
 
-    static List<String> read(File file) throws IOException {
+    private static List<String> read(File file) throws IOException {
         return new ArrayList<>(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
     }
 
     /**
      * Keeps the file's own line endings (CRLF or LF), so only the changed lines differ.
      */
-    static void write(File file, List<String> lines) throws IOException {
+    private static void write(File file, List<String> lines) throws IOException {
         String original = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         String separator = original.contains("\r\n") ? "\r\n" : "\n";
         Files.write(file.toPath(), (String.join(separator, lines) + separator).getBytes(StandardCharsets.UTF_8));

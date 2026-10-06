@@ -11,7 +11,7 @@ import dev.padrewin.moneypouchdeluxe.manager.DataManager;
 import dev.padrewin.moneypouchdeluxe.hook.PouchPlaceholderExpansion;
 import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
 import dev.padrewin.moneypouchdeluxe.utils.ConfigFiles;
-import dev.padrewin.moneypouchdeluxe.utils.ConfigUpdater;
+import dev.padrewin.colddev.config.ConfigUpdater;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListener;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;

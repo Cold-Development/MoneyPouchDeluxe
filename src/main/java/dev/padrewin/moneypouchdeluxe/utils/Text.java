@@ -25,23 +25,13 @@ public final class Text {
     private Text() {
     }
 
-    /**
-     * A gradient or rainbow tag directly followed by another colour: the gradient would cover nothing.
-     * HexUtils doesn't see a colour right after the tag as the end of the gradient, so it would
-     * colour that code letter by letter (showing e.g. "&a" in the message) instead of using it.
-     */
-    private static final Pattern EMPTY_GRADIENT = Pattern.compile(
-            "(?:<(?:gradient|g)(?:#\\d+)?(?::#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})){2,}(?::(?:l|L|loop))?>"
-                    + "|<(?:rainbow|r)(?:#\\d+)?(?::\\d*\\.?\\d+)?(?::\\d*\\.?\\d+)?(?::(?:l|L|loop))?>)"
-                    + "(?=&[0-9a-fA-Fr]|&#[0-9a-fA-F]{6}|§|<#[0-9a-fA-F]{6}>|\\{#[0-9a-fA-F]{6}}|<(?:gradient|g|rainbow|r)[#:>])");
     private static final Pattern GLYPH = Pattern.compile("<glyph:[a-zA-Z0-9_.\\-]+>");
 
     public static String color(String text) {
         if (text == null) {
             return null;
         }
-        String withoutEmptyGradients = EMPTY_GRADIENT.matcher(text).replaceAll("");
-        return repairGlyphs(HexUtils.colorify(withoutEmptyGradients));
+        return repairGlyphs(HexUtils.colorify(text));
     }
 
     /**
