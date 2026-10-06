@@ -4,6 +4,7 @@ import dev.padrewin.colddev.ColdPlugin;
 import dev.padrewin.colddev.config.CommentedFileConfiguration;
 import dev.padrewin.colddev.locale.YamlFileLocale;
 import dev.padrewin.colddev.manager.AbstractLocaleManager;
+import dev.padrewin.colddev.utils.StringPlaceholders;
 import dev.padrewin.moneypouchdeluxe.utils.ConfigFiles;
 import dev.padrewin.moneypouchdeluxe.utils.Text;
 import org.bukkit.Bukkit;
@@ -96,6 +97,15 @@ public class LocaleManager extends AbstractLocaleManager {
         } catch (IOException e) {
             this.coldPlugin.getLogger().severe("Failed to move the messages from config.yml to the locale folder: " + e.getMessage());
         }
+    }
+
+    /**
+     * Coloured through {@link Text#color}, which handles a gradient followed by a placeholder that
+     * brings its own colour (an economy prefix like {@code &a$}) and glyphs inside gradients.
+     */
+    @Override
+    public String getLocaleMessage(String messageKey, StringPlaceholders stringPlaceholders) {
+        return Text.color(stringPlaceholders.apply(this.getLocaleString(messageKey)));
     }
 
     /**
