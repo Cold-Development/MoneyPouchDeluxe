@@ -40,6 +40,7 @@ Main command: `/mp`. Aliases: `/moneypouchdeluxe`, `/moneypouch`, `/cp`, `/mpa`,
 |---|---|---|
 | `moneypouch.admin` | `/mp give`, `/mp list`, `/mp economies`, `/mp reload` | OP |
 | `moneypouch.admin.giveall` | `/mp give <pouch> *` (give to everyone online). Includes `moneypouch.admin`. | OP |
+| `moneypouchdeluxe.updates` | A message on join when a new version is released on GitHub (checked when the server starts). `colddev.updates` does the same for every Cold Development plugin. | OP |
 
 **Regular players don't need any permission** to receive pouches or open public ones. Don't give them `moneypouch.admin`: it lets them give themselves unlimited pouches.
 

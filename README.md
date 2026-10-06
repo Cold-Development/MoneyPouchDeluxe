@@ -133,6 +133,7 @@ Aliases: `/moneypouchdeluxe`, `/moneypouch`, `/cp`, `/mpa`, `/cpa`. Command name
 
 - **moneypouch.admin**: give pouches and use admin commands.
 - **moneypouch.admin.giveall**: give a pouch to everyone online with `*`.
+- **moneypouchdeluxe.updates**: get a message on join when a new version is released (`colddev.updates` does it for every Cold Development plugin). OPs and LuckPerms `*` have it.
 - **Per pouch**: whatever you set in `options.permission-required`, e.g. `moneypouch.pouches.<id>`.
 - Pouches without `permission-required` can be opened by anyone.
 
