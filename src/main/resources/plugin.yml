@@ -19,3 +19,6 @@ permissions:
     default: op
     children:
       moneypouch.admin: true
+  moneypouchdeluxe.updates:
+    description: Get a message on join when a new version is released (colddev.updates does it for every Cold Development plugin)
+    default: op
