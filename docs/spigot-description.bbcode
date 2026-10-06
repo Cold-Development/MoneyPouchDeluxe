@@ -1,0 +1,87 @@
+[CENTER][IMG]https://imgur.com/FRoQbVI.png[/IMG]
+
+[SIZE=6][B]💰 MoneyPouchDeluxe[/B][/SIZE]
+[SIZE=4]Pouches that players right-click to win a random amount of money, points, XP or any currency,
+revealed digit by digit in an animated title.[/SIZE]
+
+[B]Paper • Spigot • Folia • 1.17 → 26.x • Java 17+[/B][/CENTER]
+
+[SIZE=5][B]✨ Why MoneyPouchDeluxe[/B][/SIZE]
+[LIST]
+[*][B]Any currency, no hard dependencies[/B]: XP built in, Vault and PlayerPoints hooked directly, anything else through a console command.
+[*][B]No fake prizes[/B]: when an economy refuses a payment, the player gets an error instead of the prize message, the console logs it and the pouch can be refunded.
+[*][B]Open a whole stack[/B] with sneak + right click: one reveal, the total amount.
+[*][B]Transaction log[/B]: every pouch opened and given, one file per day, cleaned up automatically.
+[*][B]PlaceholderAPI statistics[/B] and a [B]developer API[/B] (boosters, cancelling, reacting to rewards).
+[*][B]Your edits are safe on update[/B]: new settings and messages are added to your files automatically, comments included.
+[/LIST]
+
+[SIZE=5][B]📦 Features[/B][/SIZE]
+[LIST]
+[*][B]Custom pouches[/B] in [I]pouches.yml[/I]: name, lore, amount range, permission, and any item: vanilla, a custom head texture or a Nexo item.
+[*][B]Custom head textures[/B] from minecraft-heads.com: paste the Value, the texture URL or just the hash. Works on old versions and on 26.x.
+[*][B]Economies[/B]: each currency has its own name, prefix and suffix, with colors. Add one by copying a small file in [I]customeconomytype/[/I].
+[*][B]Animated title[/B]: obfuscated digits revealed left-to-right or right-to-left, with your number separator ([I]1,000[/I] / [I]1.000[/I] / [I]1 000[/I]).
+[*][B]Languages[/B]: every message in [I]locale/[/I] (English and Romanian included, add your own). Any message can be disabled.
+[*][B]Colors[/B]: [I]&a[/I], hex [I]&#RRGGBB[/I], gradients and rainbow.
+[*][B]Nexo[/B] (optional): Nexo items as pouches, and [I]<glyph:id>[/I] icons in names, lore, messages and titles.
+[*][B]Commands you can rename[/B]: names, aliases and disabling subcommands in [I]commands/moneypouchdeluxe.yml[/I].
+[*][B]Safe[/B]: pouches never get lost (dropped at your feet when the inventory is full), one pouch at a time per player, Folia supported.
+[/LIST]
+
+[SIZE=5][B]💻 Commands[/B][/SIZE]
+[LIST]
+[*][B]/mp give <pouch> [player] [amount][/B]: give pouches (to yourself if no player). [I]moneypouch.admin[/I]
+[*][B]/mp <pouch> [player] [amount][/B]: the same, shorter. [I]moneypouch.admin[/I]
+[*][B]/mp give <pouch> * [amount][/B]: give pouches to every online player. [I]moneypouch.admin.giveall[/I]
+[*][B]/mp list[/B]: list all pouches. [I]moneypouch.admin[/I]
+[*][B]/mp economies[/B]: list all economies. [I]moneypouch.admin[/I]
+[*][B]/mp reload[/B]: reload the config, messages, pouches and economies. [I]moneypouch.admin[/I]
+[*][B]/mp help[/B]: the commands you can use.
+[/LIST]
+Aliases: /moneypouchdeluxe, /moneypouch, /cp, /mpa, /cpa
+
+[SIZE=5][B]⚠️ Permissions[/B][/SIZE]
+[LIST]
+[*][B]moneypouch.admin[/B]: give pouches and use the admin commands.
+[*][B]moneypouch.admin.giveall[/B]: give a pouch to everyone online.
+[*][B]Per pouch[/B]: any permission you set in [I]permission-required[/I], e.g. [I]moneypouch.pouches.<id>[/I]. Pouches without it can be opened by anyone.
+[/LIST]
+
+[SIZE=5][B]📊 PlaceholderAPI[/B][/SIZE]
+[LIST]
+[*][B]%moneypouch_opened%[/B]: pouches opened
+[*][B]%moneypouch_opened_<pouch>%[/B]: pouches of one kind opened
+[*][B]%moneypouch_won_<economy>%[/B]: amount won in an economy (won_vault, won_xp, ...)
+[*][B]%moneypouch_won_pouch_<pouch>%[/B]: amount won from one kind of pouch
+[/LIST]
+Add [B]_formatted[/B] for the number with separators. Saved in SQLite, or MySQL.
+
+[SIZE=5][B]🛠️ Installation[/B][/SIZE]
+[LIST=1]
+[*]Put the jar in your [I]plugins[/I] folder and start the server.
+[*]Edit [I]pouches.yml[/I] (pouches), [I]customeconomytype/[/I] (currencies) and [I]locale/en_US.yml[/I] (messages).
+[*]Run [B]/mp reload[/B].
+[/LIST]
+Optional: Vault, PlayerPoints, PlaceholderAPI, Nexo.
+
+[SIZE=5][B]🧩 Developer API[/B][/SIZE]
+[CODE=java]@EventHandler
+public void onPouchOpen(PouchOpenEvent event) {
+    // Cancellable, before the pouch is used
+    if (event.getPlayer().hasPermission("vip.booster")) {
+        event.setAmount(event.getAmount() * 2);
+    }
+}
+
+@EventHandler
+public void onPouchReward(PouchRewardEvent event) {
+    // After the payment: event.isSuccessful(), event.getFailureReason()
+}[/CODE]
+[I]MoneyPouchDeluxeAPI.get()[/I]: pouches, pouch items, giving pouches and registering your own economies.
+
+[SIZE=5][B]⬆️ Updating from 1.x[/B][/SIZE]
+Just replace the jar: messages, pouches and settings are migrated automatically on the first start, with backups, and [I]/mp <pouch> [player] [amount][/I] keeps working in your crates and NPCs.
+
+[CENTER][B]Support:[/B] [URL='https://discord.colddev.dev']discord.colddev.dev[/URL] • [B]Source:[/B] [URL='https://github.com/Cold-Development/MoneyPouchDeluxe']GitHub[/URL]
+Continuation of the original MoneyPouch by LMBishop.[/CENTER]

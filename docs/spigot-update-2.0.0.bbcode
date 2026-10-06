@@ -1,0 +1,26 @@
+[SIZE=5][B]MoneyPouchDeluxe 2.0.0[/B][/SIZE]
+Just replace the jar: your messages, pouches and settings are migrated automatically, with backups. [I]/mp <pouch> [player] [amount][/I] keeps working in your crates and NPCs.
+
+[B]New[/B]
+[LIST]
+[*][B]Open a whole stack[/B] with sneak + right click: one reveal, the total amount.
+[*][B]Vault and PlayerPoints hooks[/B]: refused payments are detected, so players never get a fake prize message.
+[*][B]Transaction log[/B]: every pouch opened and given, in [I]logs/<date>.log[/I].
+[*][B]PlaceholderAPI[/B]: %moneypouch_opened%, %moneypouch_won_<economy>% and more, plus placeholders in every message.
+[*][B]Developer API[/B]: PouchOpenEvent (cancel or change the amount) and PouchRewardEvent.
+[*][B]Languages[/B]: messages in [I]locale/en_US.yml[/I] and [I]locale/ro_RO.yml[/I].
+[*][B]Your files stay yours[/B]: new settings and messages are added on update without touching your edits.
+[*][B]Commands[/B]: /mp give, list, economies, reload, help; names and aliases editable in [I]commands/moneypouchdeluxe.yml[/I].
+[*]Custom head textures accept the Value, the URL or the hash from minecraft-heads.com.
+[/LIST]
+
+[B]Fixed[/B]
+[LIST]
+[*]Failed command payments sent both the prize and the error message.
+[*]Refunds and failure logging didn't work for custom economies.
+[*]Invalid or huge amounts in /mp, and giving to the wrong player by a partial name.
+[*]Custom head textures on 1.20.5+, and pouches not stacking after a reload.
+[*]Sounds on 1.21.3+, and Folia issues when giving pouches.
+[/LIST]
+
+Full changelog: [URL='https://github.com/Cold-Development/MoneyPouchDeluxe/blob/master/CHANGELOG.md']CHANGELOG.md[/URL]
