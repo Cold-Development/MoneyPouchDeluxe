@@ -1,13 +1,5 @@
 # Changelog
 
-## 2.0.1
-
-### Fixed
-- When ColdDev adds a setting to `config.yml` (the language, the database settings) or a message to a `locale/` file, the comments at the end of lines and the formatting of your files are kept.
-- Command messages in a custom language fall back to English instead of "Missing locale string".
-- The comments in `commands/moneypouchdeluxe.yml` mentioned `/bits reload`.
-- Gradients followed directly by a color are handled by ColdDev itself (built on ColdDev 1.5.6).
-
 ## 2.0.0
 
 Everything from 1.x is migrated automatically on the first start: messages, pouches and settings keep your values and comments.
@@ -37,6 +29,9 @@ Everything from 1.x is migrated automatically on the first start: messages, pouc
 - Moving pouches out of `config.yml` (from 1.5.0 or older) removed the comments of the file.
 - Messages that couldn't be configured (command errors, list output, a Romanian permission message).
 - Hooking into Vault/PlayerPoints when updating from versions that had them built in, without a `vault.yml` / `playerpoints.yml`.
+- Adding new settings or messages to your files no longer removes the comments at the end of lines or reformats them.
+- Command messages in a custom language fall back to English instead of "Missing locale string".
+- The comments in `commands/moneypouchdeluxe.yml` mentioned `/bits reload`.
 
 ### Removed
 - `attributemodifiers` on pouches (broke on 1.21.3+).
