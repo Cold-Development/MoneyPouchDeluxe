@@ -8,7 +8,9 @@ prefix: '&8「&6MoneyPouch&8」&7» '
 
 # Deschiderea unui pouch
 # prize-message si reward-error: %prize% suma, %prefix%/%suffix% in jurul ei, %economy% numele economiei
+# prize-message-stack (shift + click dreapta pe un stack): la fel, plus %amount% numarul de pouch-uri deschise
 prize-message: '&fAi primit %prefix%%prize%%suffix%&f!'
+prize-message-stack: '&fAi deschis &6%amount% &fpouch-uri si ai primit %prefix%%prize%%suffix%&f!'
 reward-error: '&fPremiul %prefix%%prize%%suffix% &fnu a putut fi dat. &7(contacteaza un administrator)'
 already-opening: '&fAsteapta pana se termina de deschis primul pouch!'
 invalid-pouch: '&fAcest pouch nu mai exista! &7(contacteaza un administrator)'

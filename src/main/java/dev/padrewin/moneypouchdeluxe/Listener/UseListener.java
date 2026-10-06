@@ -18,6 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import dev.padrewin.colddev.scheduler.task.ScheduledTask;
+import dev.padrewin.colddev.utils.StringPlaceholders;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -67,10 +68,16 @@ public class UseListener implements Listener {
             return;
         }
 
-        usePouch(player, pouch);
+        // Sneaking opens the whole stack in one go
+        int count = 1;
+        if (player.isSneaking() && plugin.getConfig().getBoolean("open-whole-stack-sneaking", true)) {
+            count = itemInHand.getAmount();
+        }
 
-        if (itemInHand.getAmount() > 1) {
-            itemInHand.setAmount(itemInHand.getAmount() - 1);
+        usePouch(player, pouch, count);
+
+        if (itemInHand.getAmount() > count) {
+            itemInHand.setAmount(itemInHand.getAmount() - count);
         } else {
             player.getInventory().setItemInMainHand(null);
         }
@@ -142,12 +149,20 @@ public class UseListener implements Listener {
         } catch (Throwable ignored) { }
     }
 
-    protected void usePouch(Player player, Pouch pouch) {
-        // + 1: nextLong's upper bound is exclusive, and the configured maximum must be winnable
-        long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange() + 1);
+    /**
+     * Opens {@code count} pouches at once: each one draws its own amount from the range, and the
+     * player gets the total in a single payment, with one reveal and one message.
+     */
+    protected void usePouch(Player player, Pouch pouch, int count) {
+        long total = 0;
+        for (int i = 0; i < count; i++) {
+            // + 1: nextLong's upper bound is exclusive, and the configured maximum must be winnable
+            long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange() + 1);
+            total = total > Long.MAX_VALUE - random ? Long.MAX_VALUE : total + random;
+        }
         playSound(player, plugin.getConfig().getString("pouches.sound.opensound"));
 
-        new PaymentRunnable(plugin, random, player, pouch)
+        new PaymentRunnable(plugin, total, count, player, pouch)
                 .start(10, Math.max(1, plugin.getConfig().getInt("pouches.title.speed-in-tick", 10)));
     }
 
@@ -156,6 +171,7 @@ public class UseListener implements Listener {
         private final Player player;
         private final Pouch pouch;
         private final long payment;
+        private final int count;
 
         private final String prefixColour;
         private final String suffixColour;
@@ -173,11 +189,12 @@ public class UseListener implements Listener {
         private boolean paid;
         private ScheduledTask task;
 
-        public PaymentRunnable(MoneyPouchDeluxe plugin, long payment, Player player, Pouch pouch) {
+        public PaymentRunnable(MoneyPouchDeluxe plugin, long payment, int count, Player player, Pouch pouch) {
             opening.add(player.getUniqueId());
 
             this.player = player;
             this.payment = payment;
+            this.count = count;
             this.pouch = pouch;
 
             this.prefixColour = Text.color(
@@ -285,18 +302,20 @@ public class UseListener implements Listener {
         }
 
         private void finish(boolean success) {
-            String prize = formatNumber(payment, separator);
+            StringPlaceholders placeholders = StringPlaceholders.builder()
+                    .addAll(pouch.getEconomyType().placeholders(formatNumber(payment, separator)))
+                    .add("amount", count)
+                    .build();
             if (success) {
                 playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
-                plugin.getManager(LocaleManager.class).sendMessage(player, "prize-message",
-                        pouch.getEconomyType().placeholders(prize));
+                plugin.getManager(LocaleManager.class).sendMessage(player,
+                        count > 1 ? "prize-message-stack" : "prize-message", placeholders);
                 return;
             }
             if (plugin.getConfig().getBoolean("error-handling.refund-pouch", false)) {
-                plugin.giveOrDrop(player, pouch.getItemStack(), 1);
+                plugin.giveOrDrop(player, pouch.getItemStack(), count);
             }
-            plugin.getManager(LocaleManager.class).sendMessage(player, "reward-error",
-                    pouch.getEconomyType().placeholders(prize));
+            plugin.getManager(LocaleManager.class).sendMessage(player, "reward-error", placeholders);
         }
 
         /**
@@ -314,7 +333,7 @@ public class UseListener implements Listener {
                 return;
             }
             String message = "Failed to process payment from pouch '" + pouch.getId() + "' for player '"
-                    + player.getName() + "' (" + player.getUniqueId() + ") amount " + payment
+                    + player.getName() + "' (" + player.getUniqueId() + ") amount " + payment + (count > 1 ? " (" + count + " pouches)" : "")
                     + " " + pouch.getEconomyType() + ": " + error.getMessage();
             if (error instanceof PaymentFailedException && error.getCause() == null) {
                 plugin.getLogger().severe(message); // an expected failure: the reason is enough

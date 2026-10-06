@@ -8,7 +8,9 @@ prefix: '&8「&6MoneyPouch&8」&7» '
 
 # Opening a pouch
 # prize-message and reward-error: %prize% the amount, %prefix%/%suffix% around it, %economy% the economy's name
+# prize-message-stack (sneak + right click on a stack): the same, and %amount% the number of pouches opened
 prize-message: '&fYou have received %prefix%%prize%%suffix%&f!'
+prize-message-stack: '&fYou opened &6%amount% &fpouches and received %prefix%%prize%%suffix%&f!'
 reward-error: '&fThe reward %prefix%%prize%%suffix% &fhas failed. &7(contact an administrator)'
 already-opening: '&fPlease wait until you open the first pouch!'
 invalid-pouch: '&fThis pouch no longer exists! &7(contact an administrator)'

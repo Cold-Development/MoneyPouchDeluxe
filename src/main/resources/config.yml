@@ -37,6 +37,10 @@ pouches:
 # Rather than showing each digit left-to-right, reveal it right-to-left
 reverse-pouch-reveal: true
 
+# Sneak (shift) + right click opens the whole stack of pouches at once: each pouch draws its own
+# amount and the player gets the total, with one reveal and the 'prize-message-stack' message
+open-whole-stack-sneaking: true
+
 error-handling:
   # It is recommended you set the following to 'true' in a production environment
   # The plugin will log should a transaction fail for any reason, allowing you to investigate
