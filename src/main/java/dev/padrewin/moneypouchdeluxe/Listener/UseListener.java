@@ -312,8 +312,10 @@ public class UseListener implements Listener {
             // the player is only told once the outcome is known: the prize, or the error, never both
             result.whenComplete((ignored, error) -> {
                 Throwable cause = error == null ? null : unwrap(error);
-                Bukkit.getPluginManager().callEvent(new PouchRewardEvent(player, pouch, count, payment,
-                        cause == null ? null : String.valueOf(cause.getMessage())));
+                String failureReason = cause == null ? null : String.valueOf(cause.getMessage());
+                Bukkit.getPluginManager().callEvent(new PouchRewardEvent(player, pouch, count, payment, failureReason));
+                plugin.getTransactionLog().logOpen(player.getName(), player.getUniqueId(), pouch.getId(), count,
+                        formatNumber(payment, separator), plugin.getEconomyId(pouch.getEconomyType()), failureReason);
                 if (cause != null) {
                     logFailure(cause);
                 } else {

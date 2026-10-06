@@ -54,6 +54,14 @@ error-handling:
   # to keep this 'false' and manually investigate when errors occur.
   refund-pouch: false
 
+# Every pouch opened (and given with /mp give) is written to the logs folder, one file per day
+# (logs/2026-10-06.log): time, player, pouch, amount, economy and whether the payment worked.
+# Written in the background, so it never slows the server down.
+transaction-log:
+  enabled: true
+  # Log files older than this many days are deleted automatically (0 = keep them all)
+  keep-days: 30
+
 # Prefix/suffix shown around the amount (in the title and in %prefix%%prize%%suffix%).
 # XP is built in. Every other currency is a file in the customeconomytype folder, which can set its
 # own prefix/suffix; an entry here (economy.<file name>) is used when the file has none.

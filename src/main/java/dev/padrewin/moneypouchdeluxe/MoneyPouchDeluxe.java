@@ -51,6 +51,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     private final ItemGetter itemGetter = new ItemGetter();
     private static MoneyPouchDeluxe instance;
+    private TransactionLog transactionLog;
     private YamlConfiguration pouchesConfig = new YamlConfiguration();
 
     public MoneyPouchDeluxe() {
@@ -118,6 +119,10 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         return registerEconomyType(id, type) || economyTypes.get(id) == type;
     }
 
+    public TransactionLog getTransactionLog() {
+        return transactionLog;
+    }
+
     public static MoneyPouchDeluxe getInstance() {
         return instance;
     }
@@ -179,6 +184,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     @Override
     public void enable() {
         instance = this;
+        transactionLog = new TransactionLog(this);
         saveDefaultConfig();
         saveDefaultEconomyFiles();
 
@@ -241,6 +247,9 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     @Override
     public void disable() {
+        if (transactionLog != null) {
+            transactionLog.close();
+        }
         getLogger().info("MoneyPouchDeluxe has been disabled.");
     }
 
@@ -390,6 +399,8 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     public void reloadPouches() {
         super.reloadConfig();
         loadPouchesConfig();
+        transactionLog.configure(getConfig().getBoolean("transaction-log.enabled", true),
+                getConfig().getInt("transaction-log.keep-days", 30));
         economyTypes.clear();
         setupEconomyTypes();
 

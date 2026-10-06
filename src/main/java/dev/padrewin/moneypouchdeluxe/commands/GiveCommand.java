@@ -60,6 +60,7 @@ public class GiveCommand extends BasePouchCommand {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 this.give(sender, online, pouch, amount, false);
             }
+            this.plugin.getTransactionLog().logGiveAll(sender.getName(), Bukkit.getOnlinePlayers().size(), pouch.getId(), amount);
             this.localeManager.sendMessage(sender, "command-give-all-success",
                     StringPlaceholders.of("item", item, "amount", amount));
             return;
@@ -80,6 +81,7 @@ public class GiveCommand extends BasePouchCommand {
         }
 
         this.give(sender, player, pouch, amount, true);
+        this.plugin.getTransactionLog().logGive(sender.getName(), player.getName(), player.getUniqueId(), pouch.getId(), amount);
         this.localeManager.sendMessage(sender, "command-give-success",
                 StringPlaceholders.of("player", player.getName(), "item", item, "amount", amount));
     }

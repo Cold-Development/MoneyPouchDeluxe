@@ -100,6 +100,7 @@ public final class MoneyPouchDeluxeAPI {
                 this.plugin.giveOrDrop(player, pouch.getItemStack(), amount);
             }
         });
+        this.plugin.getTransactionLog().logGive("API", player.getName(), player.getUniqueId(), pouch.getId(), amount);
     }
 
     /**
