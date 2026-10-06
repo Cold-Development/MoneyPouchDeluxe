@@ -7,6 +7,8 @@ import dev.padrewin.colddev.ColdPlugin;
 import dev.padrewin.colddev.manager.Manager;
 import dev.padrewin.colddev.manager.PluginUpdateManager;
 import dev.padrewin.moneypouchdeluxe.manager.CommandManager;
+import dev.padrewin.moneypouchdeluxe.manager.DataManager;
+import dev.padrewin.moneypouchdeluxe.hook.PouchPlaceholderExpansion;
 import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
 import dev.padrewin.moneypouchdeluxe.utils.ConfigFiles;
 import dev.padrewin.moneypouchdeluxe.utils.ConfigUpdater;
@@ -51,7 +53,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     private YamlConfiguration pouchesConfig = new YamlConfiguration();
 
     public MoneyPouchDeluxe() {
-        super("Cold-Development", "MoneyPouchDeluxe", 23381, null, LocaleManager.class, CommandManager.class);
+        super("Cold-Development", "MoneyPouchDeluxe", 23381, DataManager.class, LocaleManager.class, CommandManager.class);
         instance = this;
     }
 
@@ -182,6 +184,10 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         getServer().getPluginManager().registerEvents(new UseListener(this), this);
 
         NexoHook.registerItemsLoadedListener(this);
+
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new PouchPlaceholderExpansion(this).register();
+        }
 
         // Defer the configuration-dependent load until all plugins have
         // completed enable(), so economy hooks can be discovered reliably.

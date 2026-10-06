@@ -7,6 +7,7 @@ import org.bukkit.*;
 import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
+import dev.padrewin.moneypouchdeluxe.manager.DataManager;
 import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -296,6 +297,10 @@ public class UseListener implements Listener {
             result.whenComplete((ignored, error) -> {
                 if (error != null) {
                     logFailure(unwrap(error));
+                } else {
+                    // Counted even if the player left meanwhile: they were paid
+                    plugin.getManager(DataManager.class).record(player.getUniqueId(), pouch.getId(),
+                            plugin.getEconomyId(pouch.getEconomyType()), count, payment);
                 }
                 runForPlayer(() -> finish(error == null));
             });

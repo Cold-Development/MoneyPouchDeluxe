@@ -64,3 +64,18 @@ economy:
     name: "XP"          # shown by %economy%
     prefix: ""
     suffix: " XP"
+
+# Where the player statistics are saved (pouches opened and amounts won, used by the PlaceholderAPI
+# placeholders). By default a SQLite file in this folder (moneypouchdeluxe.db), nothing to set up.
+mysql-settings:
+  # Use a MySQL database instead of the SQLite file (e.g. to share statistics between servers)
+  enabled: false
+  hostname: 127.0.0.1
+  port: 3306
+  database-name: ''
+  user-name: ''
+  user-password: ''
+  # Enable if your database supports SSL
+  use-ssl: false
+  # The number of connections to make to the database
+  connection-pool-size: 3
