@@ -1,7 +1,7 @@
 package dev.padrewin.moneypouchdeluxe.EconomyType;
 
 import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
-import dev.padrewin.moneypouchdeluxe.utils.Text;
+import dev.padrewin.colddev.utils.StringPlaceholders;
 import org.bukkit.entity.Player;
 
 import java.util.concurrent.CompletableFuture;
@@ -47,14 +47,10 @@ public abstract class EconomyType {
     public abstract CompletableFuture<Void> processPayment(Player player, long amount);
 
     /**
-     * Fills in the reward placeholders of a message: %prize%, %prefix%, %suffix% and %economy%.
+     * The reward placeholders of prize-message and reward-error: %prize%, %prefix%, %suffix% and %economy%.
      */
-    public String applyPlaceholders(String message, String prize) {
-        return message
-                .replace("%prefix%", Text.color(prefix))
-                .replace("%suffix%", Text.color(suffix))
-                .replace("%economy%", Text.color(name))
-                .replace("%prize%", prize);
+    public StringPlaceholders placeholders(String prize) {
+        return StringPlaceholders.of("prize", prize, "prefix", prefix, "suffix", suffix, "economy", name);
     }
 
     protected static CompletableFuture<Void> paid() {

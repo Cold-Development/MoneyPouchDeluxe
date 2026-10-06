@@ -1,0 +1,66 @@
+# ro_RO
+# Mesajele care lipsesc sunt adaugate automat in acest fisier la update-ul pluginului.
+# Pune un mesaj pe '' ca sa-l dezactivezi. Culori: &a, &l, ... si hex &#RRGGBB
+# Glyph-urile Nexo merg in orice mesaj cu <glyph:id> (daca Nexo e instalat).
+
+# Pus in fata majoritatii mesajelor
+prefix: '&8「&6MoneyPouch&8」&7» '
+
+# Deschiderea unui pouch
+# prize-message si reward-error: %prize% suma, %prefix%/%suffix% in jurul ei, %economy% numele economiei
+prize-message: '&fAi primit %prefix%%prize%%suffix%&f!'
+reward-error: '&fPremiul %prefix%%prize%%suffix% &fnu a putut fi dat. &7(contacteaza un administrator)'
+already-opening: '&fAsteapta pana se termina de deschis primul pouch!'
+invalid-pouch: '&fAcest pouch nu mai exista! &7(contacteaza un administrator)'
+pouch-no-permission: '&fNu ai permisiunea sa deschizi acest pouch!'
+
+# Primirea unui pouch: %item% numele pouch-ului, %amount%
+receive-item: '&fAi primit &6%item%&f.'
+player-full-inv: '&fInventarul tau este &cplin&f. Un pouch a fost aruncat langa tine, nu uita sa-l iei.'
+
+# Mesaje generale pentru comenzi
+no-permission: '&fNu ai permisiunea sa faci asta!'
+only-player: '&fAceasta comanda poate fi folosita doar de un jucator.'
+invalid-subcommand: '&fComanda necunoscuta. Foloseste &c/mp help &fpentru lista de comenzi.'
+invalid-argument: '&fArgument invalid: %message%&f.'
+command-usage: '&fFolosire: &c/%cmd% %args%'
+command-disabled: '&fComanda &c%command% &feste dezactivata.'
+unknown-command-error: '&cA aparut o eroare; detaliile au fost afisate in consola.'
+player-not-found: '&fJucatorul &c%player% &fnu este online.'
+player-required: '&fDin consola trebuie sa specifici un jucator: &c/mp give <pouch> <jucator> [cantitate]'
+pouch-not-found: '&fPouch-ul &c%pouch% &fnu exista.'
+invalid-amount: '&c%amount% &fnu este o cantitate valida. Foloseste un numar intreg de la &c1 &fla &c%max%&f.'
+
+# Comanda help
+command-help-description: 'Arata aceasta lista de comenzi'
+command-help-title: '&6&lMoneyPouchDeluxe &7- comenzi'
+command-help-list-description: '&8 - &e/%cmd% %subcmd% %args% &8» &7%desc%'
+command-help-list-description-no-args: '&8 - &e/%cmd% %subcmd% &8» &7%desc%'
+
+# Comanda give: %player%, %item% numele pouch-ului, %amount%
+# /mp <pouch> [jucator] [cantitate] merge in continuare ca scurtatura pentru /mp give
+command-give-description: 'Da un pouch unui jucator, tuturor (*) sau tie'
+command-give-success: '&fI-ai dat lui &6%player%&f %item%&f.'
+command-give-all-success: '&fAi dat &6tuturor&f %item%&f.'
+command-give-full-inventory: '&fInventarul lui &6%player% &feste &cplin&f. Pouch-ul a fost aruncat langa jucator.'
+
+# Comanda list: %count%, apoi cate o linie pentru fiecare pouch cu %pouch%, %min%, %max%, %economy% si %permission%
+command-list-description: 'Arata toate pouch-urile'
+command-list-header: '&6&lPouch-uri &7(%count%)'
+command-list-entry: ' &8» &6%pouch% &7%min% - %max% &8| &7economie: &f%economy%%permission%'
+command-list-empty: ' &8» &7Nu este incarcat niciun pouch. Verifica pouches.yml si consola.'
+
+# Comanda economies: %count%, apoi cate o linie pentru fiecare economie cu %id%, %type%, %prefix% si %suffix%
+command-economies-description: 'Arata toate economiile'
+command-economies-header: '&6&lEconomii &7(%count%)'
+command-economies-entry: ' &8» &6%id% &7%type% &8| &f%prefix%&7123&f%suffix%'
+
+# Comanda reload
+command-reload-description: 'Reincarca config-ul, pouch-urile, economiile si mesajele'
+command-reload-reloaded: '&fMoneyPouchDeluxe a fost reincarcat.'
+
+# Erori pentru argumente invalide la comenzi
+argument-handler-string: 'Textul nu poate fi gol'
+argument-handler-integer: '&c%input% &ftrebuie sa fie un numar intreg'
+argument-handler-player: 'Niciun jucator cu numele &c%input% &fnu este online'
+argument-handler-value: '&c%input% &ftrebuie sa fie unul dintre: &7%values%'

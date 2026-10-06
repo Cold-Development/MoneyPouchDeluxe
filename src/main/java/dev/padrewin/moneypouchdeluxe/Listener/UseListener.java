@@ -7,6 +7,7 @@ import org.bukkit.*;
 import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
+import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -59,7 +60,7 @@ public class UseListener implements Listener {
         Pouch pouch = plugin.getPouch(pouchId);
         if (pouch == null) {
             // A pouch whose tier was removed from pouches.yml
-            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.INVALID_POUCH));
+            plugin.getManager(LocaleManager.class).sendMessage(player, "invalid-pouch");
             return;
         }
         if (!canOpen(player, pouch)) {
@@ -92,13 +93,13 @@ public class UseListener implements Listener {
      */
     protected boolean canOpen(Player player, Pouch pouch) {
         if (opening.contains(player.getUniqueId())) {
-            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.ALREADY_OPENING));
+            plugin.getManager(LocaleManager.class).sendMessage(player, "already-opening");
             return false;
         }
 
         String permission = pouch.getPermission();
         if (pouch.isPermissionRequired() && (permission == null || !player.hasPermission(permission))) {
-            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
+            plugin.getManager(LocaleManager.class).sendMessage(player, "pouch-no-permission");
             return false;
         }
         return true;
@@ -287,15 +288,15 @@ public class UseListener implements Listener {
             String prize = formatNumber(payment, separator);
             if (success) {
                 playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
-                Text.send(player, pouch.getEconomyType().applyPlaceholders(
-                        plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE), prize));
+                plugin.getManager(LocaleManager.class).sendMessage(player, "prize-message",
+                        pouch.getEconomyType().placeholders(prize));
                 return;
             }
             if (plugin.getConfig().getBoolean("error-handling.refund-pouch", false)) {
                 plugin.giveOrDrop(player, pouch.getItemStack(), 1);
             }
-            Text.send(player, pouch.getEconomyType().applyPlaceholders(
-                    plugin.getMessage(MoneyPouchDeluxe.Message.REWARD_ERROR), prize));
+            plugin.getManager(LocaleManager.class).sendMessage(player, "reward-error",
+                    pouch.getEconomyType().placeholders(prize));
         }
 
         /**

@@ -7,6 +7,10 @@
 
 # Pouch tiers are defined in pouches.yml
 
+# Language of the messages: the name of a file in the locale folder (en_US, ro_RO, ...)
+# Every message, including the prefix, is in that file.
+locale: en_US
+
 pouches:
   # Sound settings (!!!!!!! MUST change for pre-1.9 !!!!!!!)
   sound:
@@ -38,7 +42,7 @@ error-handling:
   # The plugin will log should a transaction fail for any reason, allowing you to investigate
   # and manually reward the player yourself
   # The player will be alerted and asked to tell an admin should this event occur regardless if this is disabled
-  # You can change this message ('reward-error') at the bottom of the config
+  # You can change this message ('reward-error') in the locale file
   log-failed-transactions: true
   # Refund the pouch to the player (if they are online) in the event a transaction failed - this is default
   # to 'false' as this results in a different prize on the second try, and it is unlikely
@@ -56,43 +60,3 @@ economy:
     name: "XP"          # shown by %economy%
     prefix: ""
     suffix: " XP"
-
-# Messages here
-# 'prefix' is put in front of every message below, so it doesn't need to be repeated in each one
-# (except the list/economies lines and the help menu).
-# Set a message to "" to disable it. Colours: &a, &l, ... and hex &#RRGGBB
-# prize-message and reward-error: %prize% amount, %prefix%/%suffix% around it, %economy% the economy's name.
-# give-item, give-all and receive-item: %player%, %item% (the pouch's name) and %amount%.
-messages:
-  prefix: "&8「<glyph:icons_beetroot>&8」&7» "
-  full-inv: "&6%player%'s &finventory is &cfull&f. The pouch was dropped near the player."
-  player-full-inv: "&fYour inventory is &cfull&f. A pouch was dropped near you. Make sure to pick it up."
-  give-item: "&fYou have given &6%player%&f %item%&f."
-  give-all: "&fYou have given &6everyone&f %item%&f."
-  receive-item: "&fYou have received &6%item%&f."
-  prize-message: "&fYou have received %prefix%%prize%%suffix%&f!"
-  already-opening: "&fPlease wait until you open the first pouch!"
-  invalid-pouch: "&fThis pouch no longer exists! &7(contact an administrator)"
-  reward-error: "&fThe reward %prefix%%prize%%suffix% &fhas failed. &7(contact an administrator)"
-  no-permission: "&fYou do not have permission to open this pouch!"
-  no-permission-command: "&fYou do not have permission to do that!"
-  pouch-not-found: "&fThe pouch &c%pouch% &fdoes not exist."
-  player-not-found: "&fThe player &c%player% &fis not online."
-  player-required: "&fFrom the console you have to specify a player: &c/mp <pouch> <player> [amount]"
-  invalid-amount: "&c%amount% &fis not a valid amount. Use a whole number from &c1 &fto &c%max%&f."
-  reloaded: "&fMoneyPouchDeluxe has been reloaded."
-  # /mpa list: %count%, then one line per pouch with %pouch%, %min%, %max%, %economy% and %permission%
-  list-header: "&6&lPouches &7(%count%)"
-  list-entry: " &8» &6%pouch% &7%min% - %max% &8| &7economy: &f%economy%%permission%"
-  list-empty: " &8» &7No pouches are loaded. Check pouches.yml and the console."
-  # /mpa economies: %count%, then one line per economy with %id%, %type%, %prefix% and %suffix%
-  economies-header: "&6&lEconomies &7(%count%)"
-  economies-entry: " &8» &6%id% &7%type% &8| &f%prefix%&7123&f%suffix%"
-  # /mp and /mpa without arguments. %version% = plugin version
-  help:
-    - "&6&lMoneyPouchDeluxe &7v%version%"
-    - "&7<> = required, [] = optional"
-    - "&e/mp <pouch> [player|*] [amount] &8» &7give a pouch to a player, everyone (*) or yourself"
-    - "&e/mpa list &8» &7list all pouches"
-    - "&e/mpa economies &8» &7list all economies"
-    - "&e/mpa reload &8» &7reload the config"

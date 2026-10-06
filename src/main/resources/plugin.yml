@@ -3,27 +3,19 @@ version: ${version}
 main: dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe
 author: padrewin
 website: 'https://github.com/Cold-Development/MoneyPouchDeluxe'
-softdepend: [Nexo, Vault, PlayerPoints]
+softdepend: [Nexo, Vault, PlayerPoints, PlaceholderAPI]
 api-version: "1.16"
 folia-supported: true
-commands:
-  moneypouch:
-    description: Give pouches to players
-    usage: /mp <pouch> [player|*] [amount]
-    permission: moneypouch.admin
-    aliases: [cp, mp]
-  moneypouchadmin:
-    description: Admin command for MoneyPouchDeluxe
-    usage: /mpa <list|economies|reload>
-    permission: moneypouch.admin
-    aliases: [cpa, mpa]
+
+# Commands are registered by the plugin itself: /moneypouchdeluxe (aliases mp, cp, moneypouch, mpa, cpa).
+# Their names and aliases can be changed in plugins/MoneyPouchDeluxe/commands/moneypouchdeluxe.yml
 
 permissions:
   moneypouch.admin:
-    description: Use /mp and /mpa (give pouches, list, reload)
+    description: Use /mp give, list, economies and reload
     default: op
   moneypouch.admin.giveall:
-    description: Give a pouch to every online player with /mp <pouch> *
+    description: Give a pouch to every online player with /mp give <pouch> *
     default: op
     children:
       moneypouch.admin: true

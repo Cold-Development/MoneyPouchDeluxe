@@ -1,0 +1,66 @@
+# en_US
+# Missing messages are added to this file automatically when the plugin updates.
+# Set a message to '' to disable it. Colours: &a, &l, ... and hex &#RRGGBB
+# Nexo glyphs work in every message with <glyph:id> (when Nexo is installed).
+
+# Put in front of most messages
+prefix: '&8「&6MoneyPouch&8」&7» '
+
+# Opening a pouch
+# prize-message and reward-error: %prize% the amount, %prefix%/%suffix% around it, %economy% the economy's name
+prize-message: '&fYou have received %prefix%%prize%%suffix%&f!'
+reward-error: '&fThe reward %prefix%%prize%%suffix% &fhas failed. &7(contact an administrator)'
+already-opening: '&fPlease wait until you open the first pouch!'
+invalid-pouch: '&fThis pouch no longer exists! &7(contact an administrator)'
+pouch-no-permission: '&fYou do not have permission to open this pouch!'
+
+# Receiving a pouch: %item% the pouch's name, %amount%
+receive-item: '&fYou have received &6%item%&f.'
+player-full-inv: '&fYour inventory is &cfull&f. A pouch was dropped near you. Make sure to pick it up.'
+
+# Generic command messages
+no-permission: '&fYou do not have permission to do that!'
+only-player: '&fThis command can only be used by a player.'
+invalid-subcommand: '&fUnknown command. Use &c/mp help &ffor the list of commands.'
+invalid-argument: '&fInvalid argument: %message%&f.'
+command-usage: '&fUsage: &c/%cmd% %args%'
+command-disabled: '&fThe command &c%command% &fis disabled.'
+unknown-command-error: '&cAn error occurred; details have been printed to the console.'
+player-not-found: '&fThe player &c%player% &fis not online.'
+player-required: '&fFrom the console you have to specify a player: &c/mp give <pouch> <player> [amount]'
+pouch-not-found: '&fThe pouch &c%pouch% &fdoes not exist.'
+invalid-amount: '&c%amount% &fis not a valid amount. Use a whole number from &c1 &fto &c%max%&f.'
+
+# Help command
+command-help-description: 'Shows this list of commands'
+command-help-title: '&6&lMoneyPouchDeluxe &7- commands'
+command-help-list-description: '&8 - &e/%cmd% %subcmd% %args% &8» &7%desc%'
+command-help-list-description-no-args: '&8 - &e/%cmd% %subcmd% &8» &7%desc%'
+
+# Give command: %player%, %item% the pouch's name, %amount%
+# /mp <pouch> [player] [amount] still works as a shortcut for /mp give
+command-give-description: 'Give a pouch to a player, everyone (*) or yourself'
+command-give-success: '&fYou have given &6%player%&f %item%&f.'
+command-give-all-success: '&fYou have given &6everyone&f %item%&f.'
+command-give-full-inventory: '&6%player%''s &finventory is &cfull&f. The pouch was dropped near the player.'
+
+# List command: %count%, then one line per pouch with %pouch%, %min%, %max%, %economy% and %permission%
+command-list-description: 'List all pouches'
+command-list-header: '&6&lPouches &7(%count%)'
+command-list-entry: ' &8» &6%pouch% &7%min% - %max% &8| &7economy: &f%economy%%permission%'
+command-list-empty: ' &8» &7No pouches are loaded. Check pouches.yml and the console.'
+
+# Economies command: %count%, then one line per economy with %id%, %type%, %prefix% and %suffix%
+command-economies-description: 'List all economies'
+command-economies-header: '&6&lEconomies &7(%count%)'
+command-economies-entry: ' &8» &6%id% &7%type% &8| &f%prefix%&7123&f%suffix%'
+
+# Reload command
+command-reload-description: 'Reload the config, pouches, economies and messages'
+command-reload-reloaded: '&fMoneyPouchDeluxe has been reloaded.'
+
+# Errors for invalid command arguments
+argument-handler-string: 'Text cannot be empty'
+argument-handler-integer: '&c%input% &fmust be a whole number'
+argument-handler-player: 'No player named &c%input% &fis online'
+argument-handler-value: '&c%input% &fmust be one of: &7%values%'

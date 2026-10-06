@@ -162,7 +162,7 @@ public final class NexoHook {
 
         @EventHandler
         public void onItemsLoaded(NexoItemsLoadedEvent event) {
-            plugin.getScheduler().runTask(plugin::reload);
+            plugin.getScheduler().runTask(plugin::reloadPouches);
         }
     }
 

@@ -6,12 +6,12 @@ import dev.padrewin.moneypouchdeluxe.utils.Text;
 import dev.padrewin.colddev.ColdPlugin;
 import dev.padrewin.colddev.manager.Manager;
 import dev.padrewin.colddev.manager.PluginUpdateManager;
-import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeAdminCommand;
-import dev.padrewin.moneypouchdeluxe.Command.MoneyPouchDeluxeBaseCommand;
+import dev.padrewin.moneypouchdeluxe.manager.CommandManager;
+import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
+import dev.padrewin.moneypouchdeluxe.utils.ConfigFiles;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListener;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -50,7 +50,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     private YamlConfiguration pouchesConfig = new YamlConfiguration();
 
     public MoneyPouchDeluxe() {
-        super("Cold-Development", "MoneyPouchDeluxe", 23381, null, null, null);
+        super("Cold-Development", "MoneyPouchDeluxe", 23381, null, LocaleManager.class, CommandManager.class);
         instance = this;
     }
 
@@ -111,6 +111,27 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         return pouches;
     }
 
+    /**
+     * config.yml has to exist before ColdDev loads it in onEnable (it adds the 'locale' setting when
+     * missing): otherwise a first install would get a config.yml with only that setting in it.
+     * The setting is added as text to existing configs, so nothing else in them changes.
+     */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        saveDefaultConfig();
+        try {
+            if (ConfigFiles.addTopLevelKeyIfMissing(new File(getDataFolder(), "config.yml"), "locale", List.of(
+                    "# Language of the messages: the name of a file in the locale folder (en_US, ro_RO, ...)",
+                    "# Every message, including the prefix, is in that file.",
+                    "locale: en_US"))) {
+                getLogger().info("Added the 'locale' setting to config.yml.");
+            }
+        } catch (IOException e) {
+            getLogger().warning("Could not add the 'locale' setting to config.yml: " + e.getMessage());
+        }
+    }
+
     @Override
     public void enable() {
         instance = this;
@@ -135,14 +156,11 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
         getServer().getPluginManager().registerEvents(new UseListener(this), this);
 
-        Objects.requireNonNull(getServer().getPluginCommand("moneypouch")).setExecutor(new MoneyPouchDeluxeBaseCommand(this));
-        Objects.requireNonNull(getServer().getPluginCommand("moneypouchadmin")).setExecutor(new MoneyPouchDeluxeAdminCommand(this));
-
         NexoHook.registerItemsLoadedListener(this);
 
         // Defer the configuration-dependent load until all plugins have
         // completed enable(), so economy hooks can be discovered reliably.
-        this.getScheduler().runTask(this::reload);
+        this.getScheduler().runTask(this::reloadPouches);
     }
 
     /**
@@ -182,47 +200,6 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     }
 
     /**
-     * A configured message with messages.prefix in front of it. A message set to "" is disabled:
-     * it comes back empty (without the prefix) and {@link Text#send} skips it.
-     */
-    public String getMessage(Message message) {
-        String text = this.getConfig().getString("messages." + message.getId(), message.getDef());
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        String prefix = message.isPrefixed() ? this.getConfig().getString("messages.prefix", "") : "";
-        return Text.color(prefix + text);
-    }
-
-    /**
-     * {@link #getMessage(Message)} with placeholders filled in, given as pairs:
-     * {@code getMessage(Message.GIVE_ITEM, "%player%", name, "%item%", item)}.
-     */
-    public String getMessage(Message message, String... placeholders) {
-        String text = getMessage(message);
-        for (int i = 0; i + 1 < placeholders.length; i += 2) {
-            text = text.replace(placeholders[i], placeholders[i + 1]);
-        }
-        return text;
-    }
-
-    /**
-     * A multi-line message (a list in the config), coloured, without the prefix. Placeholders as pairs.
-     */
-    public List<String> getMessageList(String id, List<String> def, String... placeholders) {
-        List<String> lines = this.getConfig().isList("messages." + id)
-                ? this.getConfig().getStringList("messages." + id) : def;
-        List<String> result = new ArrayList<>(lines.size());
-        for (String line : lines) {
-            for (int i = 0; i + 1 < placeholders.length; i += 2) {
-                line = line.replace(placeholders[i], placeholders[i + 1]);
-            }
-            result.add(Text.color(line));
-        }
-        return result;
-    }
-
-    /**
      * @return the loaded pouch with this id (case-insensitive), or null
      */
     public Pouch getPouch(String id) {
@@ -234,19 +211,17 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         return null;
     }
 
-    public void sendHelp(CommandSender sender) {
-        for (String line : getMessageList("help", DEFAULT_HELP, "%version%", getDescription().getVersion())) {
-            Text.send(sender, line.isEmpty() ? " " : line);
+    /**
+     * @return the id an economy is registered under (as used in pouches.yml)
+     */
+    public String getEconomyId(EconomyType economy) {
+        for (Map.Entry<String, EconomyType> entry : economyTypes.entrySet()) {
+            if (entry.getValue() == economy) {
+                return entry.getKey();
+            }
         }
+        return economy.toString();
     }
-
-    private static final List<String> DEFAULT_HELP = List.of(
-            "&6&lMoneyPouchDeluxe &7v%version%",
-            "&7<> = required, [] = optional",
-            "&e/mp <pouch> [player|*] [amount] &8» &7give a pouch to a player, everyone (*) or yourself",
-            "&e/mpa list &8» &7list all pouches",
-            "&e/mpa economies &8» &7list all economies",
-            "&e/mpa reload &8» &7reload the config");
 
     /**
      * Runs on the player's thread: right away if already on it, otherwise scheduled there. On Folia
@@ -319,19 +294,20 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     /**
      * Pouches used to live in config.yml under pouches.tier: move them into pouches.yml, keeping
-     * a copy of the old config.yml next to it just in case.
+     * a copy of the old config.yml next to it just in case. Only the server's own pouches end up in
+     * pouches.yml, never the example ones. pouches.tier is removed from config.yml line by line, so
+     * the rest of the file (comments included) stays as it was.
      */
     private void migratePouchesConfig(ConfigurationSection legacyTiers, File file) {
         YamlConfiguration migrated = new YamlConfiguration();
         copySection(legacyTiers, migrated);
         try {
             File configFile = new File(getDataFolder(), "config.yml");
-            Files.copy(configFile.toPath(), new File(getDataFolder(), "config.yml.before-pouches-yml").toPath(),
-                    StandardCopyOption.REPLACE_EXISTING);
+            ConfigFiles.backup(configFile, ".before-pouches-yml");
             migrated.save(file);
 
-            getConfig().set("pouches.tier", null);
-            saveConfig();
+            ConfigFiles.removeSection(configFile, "pouches.tier", "The pouches are in pouches.yml now.");
+            reloadConfig();
             getLogger().info("Moved " + legacyTiers.getKeys(false).size() + " pouches from config.yml to pouches.yml"
                     + " (old config saved as config.yml.before-pouches-yml).");
         } catch (IOException e) {
@@ -349,7 +325,19 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         }
     }
 
+    /**
+     * Reloads everything: config.yml, the locale files and commands (ColdDev managers), then the
+     * economies and pouches.
+     */
+    @Override
     public void reload() {
+        reload(this::reloadPouches);
+    }
+
+    /**
+     * Reloads config.yml, pouches.yml and the custom economies, and rebuilds every pouch.
+     */
+    public void reloadPouches() {
         super.reloadConfig();
         loadPouchesConfig();
         economyTypes.clear();
@@ -538,59 +526,5 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     public <T extends Manager> T getSpecificManager(Class<T> managerClass) {
         return getManager(managerClass);
-    }
-
-    public enum Message {
-
-        FULL_INV("full-inv", "&6%player%'s &finventory is &cfull&f. The pouch was dropped near the player."),
-        PLAYER_FULL_INV("player-full-inv", "&fYour inventory is &cfull&f. A pouch was dropped near you. Make sure to pick it up."),
-        GIVE_ITEM("give-item", "&fYou have given &6%player%&f %item%&f."),
-        GIVE_ALL("give-all", "&fYou have given &6everyone&f %item%&f."),
-        RECEIVE_ITEM("receive-item", "&fYou have received &6%item%&f."),
-        PRIZE_MESSAGE("prize-message", "&fYou have received %prefix%%prize%%suffix%&f!"),
-        ALREADY_OPENING("already-opening", "&fPlease wait until you open the first pouch!"),
-        INVALID_POUCH("invalid-pouch", "&fThis pouch no longer exists! &7(contact an administrator)"),
-        REWARD_ERROR("reward-error", "&fThe reward %prefix%%prize%%suffix% &fhas failed. &7(contact an administrator)"),
-        NO_PERMISSION("no-permission", "&fYou do not have permission to open this pouch!"),
-        NO_PERMISSION_COMMAND("no-permission-command", "&fYou do not have permission to do that!"),
-        POUCH_NOT_FOUND("pouch-not-found", "&fThe pouch &c%pouch% &fdoes not exist."),
-        PLAYER_NOT_FOUND("player-not-found", "&fThe player &c%player% &fis not online."),
-        PLAYER_REQUIRED("player-required", "&fFrom the console you have to specify a player: &c/mp <pouch> <player> [amount]"),
-        INVALID_AMOUNT("invalid-amount", "&c%amount% &fis not a valid amount. Use a whole number from &c1 &fto &c%max%&f."),
-        RELOADED("reloaded", "&fMoneyPouchDeluxe has been reloaded."),
-        LIST_HEADER("list-header", "&6&lPouches &7(%count%)", false),
-        LIST_ENTRY("list-entry", " &8» &6%pouch% &7%min% - %max% &8| &7economy: &f%economy%%permission%", false),
-        LIST_EMPTY("list-empty", " &8» &7No pouches are loaded. Check pouches.yml and the console.", false),
-        ECONOMIES_HEADER("economies-header", "&6&lEconomies &7(%count%)", false),
-        ECONOMIES_ENTRY("economies-entry", " &8» &6%id% &7%type% &8| &f%prefix%&7123&f%suffix%", false);
-
-        private final String id;
-        private final String def; // (default message if undefined)
-        private final boolean prefixed;
-
-        Message(String id, String def) {
-            this(id, def, true);
-        }
-
-        Message(String id, String def, boolean prefixed) {
-            this.id = id;
-            this.def = def;
-            this.prefixed = prefixed;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getDef() {
-            return def;
-        }
-
-        /**
-         * Whether messages.prefix goes in front. Lines of a list (pouches, economies) don't get it.
-         */
-        public boolean isPrefixed() {
-            return prefixed;
-        }
     }
 }
