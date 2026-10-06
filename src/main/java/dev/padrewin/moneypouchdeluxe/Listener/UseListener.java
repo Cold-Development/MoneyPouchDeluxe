@@ -7,6 +7,8 @@ import org.bukkit.*;
 import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
+import dev.padrewin.moneypouchdeluxe.api.event.PouchOpenEvent;
+import dev.padrewin.moneypouchdeluxe.api.event.PouchRewardEvent;
 import dev.padrewin.moneypouchdeluxe.manager.DataManager;
 import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
 import org.bukkit.entity.Player;
@@ -75,7 +77,14 @@ public class UseListener implements Listener {
             count = itemInHand.getAmount();
         }
 
-        usePouch(player, pouch, count);
+        // Other plugins can cancel the opening or change the amount (e.g. boosters)
+        PouchOpenEvent openEvent = new PouchOpenEvent(player, pouch, count, drawAmount(pouch, count));
+        Bukkit.getPluginManager().callEvent(openEvent);
+        if (openEvent.isCancelled()) {
+            return;
+        }
+
+        usePouch(player, pouch, count, openEvent.getAmount());
 
         if (itemInHand.getAmount() > count) {
             itemInHand.setAmount(itemInHand.getAmount() - count);
@@ -151,16 +160,23 @@ public class UseListener implements Listener {
     }
 
     /**
-     * Opens {@code count} pouches at once: each one draws its own amount from the range, and the
-     * player gets the total in a single payment, with one reveal and one message.
+     * The total for {@code count} pouches: each one draws its own amount from the range.
      */
-    protected void usePouch(Player player, Pouch pouch, int count) {
+    protected static long drawAmount(Pouch pouch, int count) {
         long total = 0;
         for (int i = 0; i < count; i++) {
             // + 1: nextLong's upper bound is exclusive, and the configured maximum must be winnable
             long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange() + 1);
             total = total > Long.MAX_VALUE - random ? Long.MAX_VALUE : total + random;
         }
+        return total;
+    }
+
+    /**
+     * Opens {@code count} pouches at once: the player gets the total in a single payment, with one
+     * reveal and one message.
+     */
+    protected void usePouch(Player player, Pouch pouch, int count, long total) {
         playSound(player, plugin.getConfig().getString("pouches.sound.opensound"));
 
         new PaymentRunnable(plugin, total, count, player, pouch)
@@ -295,8 +311,11 @@ public class UseListener implements Listener {
             // Some economies finish later (a console command runs on the global thread on Folia), so
             // the player is only told once the outcome is known: the prize, or the error, never both
             result.whenComplete((ignored, error) -> {
-                if (error != null) {
-                    logFailure(unwrap(error));
+                Throwable cause = error == null ? null : unwrap(error);
+                Bukkit.getPluginManager().callEvent(new PouchRewardEvent(player, pouch, count, payment,
+                        cause == null ? null : String.valueOf(cause.getMessage())));
+                if (cause != null) {
+                    logFailure(cause);
                 } else {
                     // Counted even if the player left meanwhile: they were paid
                     plugin.getManager(DataManager.class).record(player.getUniqueId(), pouch.getId(),

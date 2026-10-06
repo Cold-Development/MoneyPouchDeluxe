@@ -47,6 +47,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     private final ArrayList<Pouch> pouches = new ArrayList<>();
 
     private final Map<String, EconomyType> economyTypes = new HashMap<>();
+    private final Map<String, EconomyType> externalEconomyTypes = new HashMap<>();
 
     private final ItemGetter itemGetter = new ItemGetter();
     private static MoneyPouchDeluxe instance;
@@ -99,6 +100,22 @@ public class MoneyPouchDeluxe extends ColdPlugin {
         economyTypes.put(id, type);
         //super.getLogger().info("Economy type '" + id + "' registered successfully: " + type.toString());
         return true;
+    }
+
+    /**
+     * An economy added by another plugin through the API. Unlike the others it isn't read from a
+     * file, so it's kept here and registered again on every reload.
+     *
+     * @return false if the id is already used by another economy
+     */
+    public boolean registerExternalEconomyType(String id, EconomyType type) {
+        id = id.toLowerCase();
+        EconomyType existing = externalEconomyTypes.get(id);
+        if (existing != null && existing != type) {
+            return false;
+        }
+        externalEconomyTypes.put(id, type);
+        return registerEconomyType(id, type) || economyTypes.get(id) == type;
     }
 
     public static MoneyPouchDeluxe getInstance() {
@@ -209,7 +226,8 @@ public class MoneyPouchDeluxe extends ColdPlugin {
 
     /**
      * The only built-in economy is XP, since it's vanilla. Every other currency is a custom economy
-     * from the customeconomytype folder, so the plugin never depends on an economy plugin.
+     * from the customeconomytype folder (or registered by another plugin through the API), so the
+     * plugin never depends on an economy plugin.
      */
     private void setupEconomyTypes() {
         if (!economyTypes.containsKey("xp")) {
@@ -218,6 +236,7 @@ public class MoneyPouchDeluxe extends ColdPlugin {
                     this.getConfig().getString("economy.xp.prefix", ""),
                     this.getConfig().getString("economy.xp.suffix", " XP")));
         }
+        externalEconomyTypes.forEach(this::registerEconomyType);
     }
 
     @Override
