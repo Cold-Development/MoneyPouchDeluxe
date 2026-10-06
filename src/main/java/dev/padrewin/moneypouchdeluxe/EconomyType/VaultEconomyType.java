@@ -1,69 +1,59 @@
 package dev.padrewin.moneypouchdeluxe.EconomyType;
 
-import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
 import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
-import java.util.logging.Level;
+import java.util.concurrent.CompletableFuture;
 
+/**
+ * Money through Vault, straight to whichever economy plugin provides it (EssentialsX, CMI, ...).
+ * Unlike a command, Vault tells whether the deposit went through.
+ * <p>
+ * Only created through {@link EconomyHooks} when Vault is installed, so the Vault classes are never
+ * loaded without it.
+ */
 public class VaultEconomyType extends EconomyType {
 
-    private final MoneyPouchDeluxe plugin;
+    public VaultEconomyType(String name, String prefix, String suffix) {
+        super(name, prefix, suffix);
+    }
 
-    private Economy economy = null;
-    private boolean fail = false;
-
-    public VaultEconomyType(MoneyPouchDeluxe plugin, String prefix, String suffix) {
-        super(prefix, suffix);
-        this.plugin = plugin;
-
-        if (Bukkit.getServer().getPluginManager().getPlugin("Vault") == null) {
-            fail = true;
-            Bukkit.getPluginManager().getPlugin("MoneyPouch").getLogger().log(Level.SEVERE, "Failed to hook Vault!");
-            return;
-        }
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            fail = true;
-            Bukkit.getPluginManager().getPlugin("MoneyPouch").getLogger().log(Level.SEVERE, "Failed to hook Vault!");
-            return;
-        }
-        economy = rsp.getProvider();
+    /**
+     * The economy is looked up on every payment rather than once: economy plugins can register
+     * with Vault late, or be swapped by a reload.
+     */
+    static Economy getEconomy() {
+        RegisteredServiceProvider<Economy> registration = Bukkit.getServicesManager().getRegistration(Economy.class);
+        return registration != null ? registration.getProvider() : null;
     }
 
     @Override
-    public void processPayment(Player player, long amount) {
-        if (fail) {
-            throw new PaymentFailedException("Failed to hook into Vault!");
+    public CompletableFuture<Void> processPayment(Player player, long amount) {
+        Economy economy = getEconomy();
+        if (economy == null) {
+            return failed("no economy plugin is registered with Vault");
         }
-
         try {
-            economy.depositPlayer(player, amount);
+            EconomyResponse response = economy.depositPlayer(player, amount);
+            if (response == null || !response.transactionSuccess()) {
+                String reason = response == null ? "no response" : response.errorMessage;
+                return failed(economy.getName() + " refused the deposit: " + reason);
+            }
+            return paid();
         } catch (Throwable t) {
-            throw new PaymentFailedException("An unknown exception occurred", t);
+            return CompletableFuture.failedFuture(
+                    new PaymentFailedException(economy.getName() + " threw an error while depositing", t));
         }
-    }
-
-    @Override
-    public boolean doTransaction(Player player, long amount) {
-        if (fail) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to complete transaction in shop: failed to hook into Vault");
-            return false;
-        }
-
-        if (economy.getBalance(player) < amount) {
-            return false;
-        }
-        economy.withdrawPlayer(player, amount);
-        return true;
     }
 
     @Override
     public String toString() {
-        return "Vault";
+        Economy economy = getEconomy();
+        return "Vault (" + (economy != null ? economy.getName() : "no economy plugin") + ")";
     }
 
 }

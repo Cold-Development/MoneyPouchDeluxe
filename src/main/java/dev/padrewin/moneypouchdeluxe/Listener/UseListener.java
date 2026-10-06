@@ -1,40 +1,37 @@
 package dev.padrewin.moneypouchdeluxe.Listener;
 
-import org.black_ixx.playerpoints.PlayerPoints;
-import org.black_ixx.playerpoints.PlayerPointsAPI;
+import java.util.concurrent.ConcurrentHashMap;
+
+import dev.padrewin.moneypouchdeluxe.utils.Text;
 import org.bukkit.*;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
+import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
 import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
 import dev.padrewin.moneypouchdeluxe.Pouch;
-import dev.padrewin.moneypouchdeluxe.EconomyType.InvalidEconomyType;
-import dev.padrewin.moneypouchdeluxe.Title.Title_Other;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import dev.padrewin.colddev.scheduler.task.ScheduledTask;
 
-import java.lang.reflect.Field;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.HashSet;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 public class UseListener implements Listener {
 
     protected final MoneyPouchDeluxe plugin;
-    protected final Set<UUID> opening = new HashSet<>();
+    protected final Set<UUID> opening = ConcurrentHashMap.newKeySet();
 
     public UseListener(MoneyPouchDeluxe plugin) {
         this.plugin = plugin;
@@ -42,134 +39,118 @@ public class UseListener implements Listener {
 
     @EventHandler
     public void onPlayerUse(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) {
             return;
         }
-
-        if (player.getItemInHand() != null && player.getItemInHand().getType() != Material.AIR) {
-            onRightClickInMainHand(player, event);
-        }
-    }
-
-    protected void onRightClickInMainHand(Player player, Cancellable event) {
-        ItemStack itemInHand = player.getItemInHand();
-
-        if (itemInHand == null || itemInHand.getType() == Material.AIR) {
+        if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
 
-        boolean pouchMatched = false;
-
-        String itemPouchId = getPouchId(itemInHand);
-
-        for (Pouch pouch : plugin.getPouches()) {
-            String pouchId = pouch.getId();
-
-            if (itemPouchId != null && itemPouchId.equals(pouchId)) {
-                event.setCancelled(true);
-                usePouch(player, pouch);
-                removeOrReduceItem(player);
-                pouchMatched = true;
-                break;
-            }
+        Player player = event.getPlayer();
+        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        String pouchId = getPouchId(itemInHand);
+        if (pouchId == null) {
+            return;
         }
 
-        if (!pouchMatched) {
-            //Bukkit.getLogger().info("No matching pouch found.");
-        }
-    }
+        // Pouches are never placed or used as their normal item
+        event.setCancelled(true);
 
-    private String getPouchId(ItemStack item) {
-        if (item.hasItemMeta()) {
-            ItemMeta meta = item.getItemMeta();
-            return meta.getPersistentDataContainer().get(new NamespacedKey(MoneyPouchDeluxe.getInstance(), "pouch-id"), PersistentDataType.STRING);
+        Pouch pouch = plugin.getPouch(pouchId);
+        if (pouch == null) {
+            // A pouch whose tier was removed from pouches.yml
+            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.INVALID_POUCH));
+            return;
         }
-        return null;
-    }
+        if (!canOpen(player, pouch)) {
+            return;
+        }
 
-    private void removeOrReduceItem(Player player) {
-        ItemStack itemInHand = player.getItemInHand();
+        usePouch(player, pouch);
 
         if (itemInHand.getAmount() > 1) {
             itemInHand.setAmount(itemInHand.getAmount() - 1);
         } else {
-            player.getInventory().removeItem(itemInHand);
+            player.getInventory().setItemInMainHand(null);
         }
         player.updateInventory();
     }
 
-    private boolean compareSkullTextures(SkullMeta skullMeta1, SkullMeta skullMeta2) {
-        try {
-            Field profileField = skullMeta1.getClass().getDeclaredField("profile");
-            profileField.setAccessible(true);
-            GameProfile profile1 = (GameProfile) profileField.get(skullMeta1);
-            GameProfile profile2 = (GameProfile) profileField.get(skullMeta2);
+    /**
+     * @return the id of the pouch this item is, or null if it isn't a pouch
+     */
+    protected String getPouchId(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
+            return null;
+        }
+        ItemMeta meta = item.getItemMeta();
+        return meta == null ? null : meta.getPersistentDataContainer().get(Pouch.getIdKey(), PersistentDataType.STRING);
+    }
 
-            if (profile1 == null || profile2 == null) {
-                return false;
-            }
-
-            Property property1 = profile1.getProperties().get("textures").iterator().next();
-            Property property2 = profile2.getProperties().get("textures").iterator().next();
-
-            return property1 != null && property2 != null && property1.equals(property2);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
+    /**
+     * Checks shared by every way of opening a pouch. Tells the player why when it can't be opened.
+     */
+    protected boolean canOpen(Player player, Pouch pouch) {
+        if (opening.contains(player.getUniqueId())) {
+            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.ALREADY_OPENING));
             return false;
         }
+
+        String permission = pouch.getPermission();
+        if (pouch.isPermissionRequired() && (permission == null || !player.hasPermission(permission))) {
+            Text.send(player, plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
+            return false;
+        }
+        return true;
     }
 
-    private void processPouchEvent(Player player, Pouch pouch, Cancellable event) {
-        event.setCancelled(true);
-        player.sendMessage("Processing pouch event for: " + pouch.getId());
-
-        if (pouch.getEconomyType() instanceof InvalidEconomyType
-                && plugin.getConfig().getBoolean("error-handling.prevent-opening-invalid-pouches", true)) {
-            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.INVALID_POUCH));
-            return;
+    /**
+     * Groups the digits with the configured separator (e.g. 1,924,281 or 1.924.281),
+     * independent of the server's locale.
+     */
+    public static String formatNumber(long value, String separator) {
+        if (separator == null || separator.isEmpty()) {
+            return String.valueOf(value);
         }
-
-        if (opening.contains(player.getUniqueId())) {
-            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.ALREADY_OPENING));
-            return;
-        }
-
-        String permission = "moneypouch.pouches." + pouch.getId();
-        if (pouch.isPermissionRequired() && !player.hasPermission(permission)) {
-            player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.NO_PERMISSION));
-            return;
-        }
-
-        if (player.getItemInHand().getAmount() == 1) {
-            player.setItemInHand(null);
-        } else {
-            player.getItemInHand().setAmount(player.getItemInHand().getAmount() - 1);
-            player.updateInventory();
-        }
-
-        usePouch(player, pouch);
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+        symbols.setGroupingSeparator(separator.charAt(0));
+        return new DecimalFormat("#,###", symbols).format(value);
     }
 
+    /**
+     * Plays a sound by its old enum name ({@code BLOCK_CHEST_OPEN}) or its key ({@code block.chest.open},
+     * also custom resource-pack sounds). Uses the key-based method, which exists on every version,
+     * since Sound stopped being an enum in 1.21.3.
+     */
     protected void playSound(Player player, String name) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        String key = name.trim();
+        if (!key.contains(".") && !key.contains(":")) {
+            try {
+                player.playSound(player.getLocation(), Sound.valueOf(key.toUpperCase(Locale.ROOT)), 3, 1);
+                return;
+            } catch (Throwable ignored) {
+                // unknown name, or Sound isn't an enum on this version: try it as a key below
+            }
+            key = key.toLowerCase(Locale.ROOT).replace('_', '.');
+        }
         try {
-            player.playSound(player.getLocation(), Sound.valueOf(name), 3, 1);
-        } catch (Exception ignored) { }
+            player.playSound(player.getLocation(), key, 3, 1);
+        } catch (Throwable ignored) { }
     }
 
     protected void usePouch(Player player, Pouch pouch) {
-        long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange());
+        // + 1: nextLong's upper bound is exclusive, and the configured maximum must be winnable
+        long random = ThreadLocalRandom.current().nextLong(pouch.getMinRange(), pouch.getMaxRange() + 1);
         playSound(player, plugin.getConfig().getString("pouches.sound.opensound"));
 
-        PaymentRunnable paymentRunnable = new PaymentRunnable(plugin, random, player, pouch);
-        if (plugin.getTitleHandle() instanceof Title_Other) {
-            paymentRunnable.pay();
-        } else {
-            paymentRunnable.runTaskTimer(plugin, 10, plugin.getConfig().getInt("pouches.title.speed-in-tick"));
-        }
+        new PaymentRunnable(plugin, random, player, pouch)
+                .start(10, Math.max(1, plugin.getConfig().getInt("pouches.title.speed-in-tick", 10)));
     }
 
-    private class PaymentRunnable extends BukkitRunnable {
+    private class PaymentRunnable implements Runnable {
 
         private final Player player;
         private final Pouch pouch;
@@ -181,6 +162,7 @@ public class UseListener implements Listener {
         private final String obfuscateColour;
         private final String obfuscateDigitChar;
         private final String obfuscateDelimiterChar;
+        private final String separator;
         private final boolean delimiter;
         private final boolean revealComma;
         private final String number;
@@ -188,6 +170,7 @@ public class UseListener implements Listener {
 
         private int position;
         private boolean paid;
+        private ScheduledTask task;
 
         public PaymentRunnable(MoneyPouchDeluxe plugin, long payment, Player player, Pouch pouch) {
             opening.add(player.getUniqueId());
@@ -196,20 +179,27 @@ public class UseListener implements Listener {
             this.payment = payment;
             this.pouch = pouch;
 
-            this.prefixColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.prefix-colour"));
-            this.suffixColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.suffix-colour"));
-            this.revealColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.reveal-colour"));
-            this.obfuscateColour = ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("pouches.title.obfuscate-colour"));
+            this.prefixColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.prefix-colour", ""));
+            this.suffixColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.suffix-colour", ""));
+            this.revealColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.reveal-colour", ""));
+            this.obfuscateColour = Text.color(
+                    plugin.getConfig().getString("pouches.title.obfuscate-colour", ""));
             this.obfuscateDigitChar = plugin.getConfig().getString("pouches.title.obfuscate-digit-char", "#");
-            this.obfuscateDelimiterChar = ",";
+            this.separator = plugin.getConfig().getString("pouches.title.format.separator", ",");
+            this.obfuscateDelimiterChar = plugin.getConfig().getString("pouches.title.obfuscate-format-char", separator);
             this.delimiter = plugin.getConfig().getBoolean("pouches.title.format.enabled", false);
             this.revealComma = plugin.getConfig().getBoolean("pouches.title.format.reveal-comma", false);
-            this.number = (delimiter ? (new DecimalFormat("#,###").format(payment)) : String.valueOf(payment));
+            this.number = delimiter ? formatNumber(payment, separator) : String.valueOf(payment);
             this.reversePouchReveal = plugin.getConfig().getBoolean("reverse-pouch-reveal");
+        }
+
+        public void start(long delay, long period) {
+            // Runs on the player's own thread (Folia). If Folia drops the task because the player
+            // left mid-reveal, stop() still pays them, just like the online check below does on Paper.
+            this.task = plugin.getScheduler().runTaskTimerAtEntity(player, this, this::stop, delay, period);
         }
 
         @Override
@@ -220,9 +210,9 @@ public class UseListener implements Listener {
             }
 
             playSound(player, plugin.getConfig().getString("pouches.sound.revealsound"));
-            String prefix = prefixColour + pouch.getEconomyType().getPrefix();
+            String prefix = prefixColour + Text.color(pouch.getEconomyType().getPrefix());
             StringBuilder viewedTitle = new StringBuilder();
-            String suffix = suffixColour + pouch.getEconomyType().getSuffix();
+            String suffix = suffixColour + Text.color(pouch.getEconomyType().getSuffix());
             for (int i = 0; i < position; i++) {
                 if (reversePouchReveal) {
                     viewedTitle.insert(0, number.charAt(number.length() - i - 1)).insert(0, revealColour);
@@ -231,29 +221,29 @@ public class UseListener implements Listener {
                 }
                 if ((i == (position - 1)) && (position != number.length())
                         && (reversePouchReveal
-                        ? (revealComma && (number.charAt(number.length() - i - 1)) == ',')
-                        : (revealComma && (number.charAt(i + 1)) == ','))) {
+                        ? (revealComma && isSeparator(number.charAt(number.length() - i - 1)))
+                        : (revealComma && isSeparator(number.charAt(i + 1))))) {
                     position++;
                 }
             }
             for (int i = position; i < number.length(); i++) {
                 if (reversePouchReveal) {
                     char at = number.charAt(number.length() - i - 1);
-                    if (at == ',')  {
+                    if (isSeparator(at)) {
                         if (revealComma) {
                             viewedTitle.insert(0, at).insert(0, revealColour);
                         } else viewedTitle.insert(0, obfuscateDelimiterChar).insert(0, ChatColor.MAGIC).insert(0, obfuscateColour);
                     } else viewedTitle.insert(0, obfuscateDigitChar).insert(0, ChatColor.MAGIC).insert(0, obfuscateColour);;
                 } else {
                     char at = number.charAt(i);
-                    if (at == ',') {
+                    if (isSeparator(at)) {
                         if (revealComma) viewedTitle.append(revealColour).append(at);
                         else viewedTitle.append(obfuscateColour).append(ChatColor.MAGIC).append(obfuscateDelimiterChar);
                     } else viewedTitle.append(obfuscateColour).append(ChatColor.MAGIC).append(obfuscateDigitChar);
                 }
             }
-            plugin.getTitleHandle().sendTitle(player, prefix + viewedTitle + suffix,
-                    ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("pouches.title.subtitle")));
+            Text.sendTitle(player, prefix + viewedTitle + suffix,
+                    Text.color(plugin.getConfig().getString("pouches.title.subtitle", "")), 0, 50, 20);
             position++;
 
             if (position > number.length()) {
@@ -261,64 +251,82 @@ public class UseListener implements Listener {
             }
         }
 
+        private boolean isSeparator(char c) {
+            return !Character.isDigit(c);
+        }
+
         public void stop() {
-            this.cancel();
+            if (this.task != null) this.task.cancel();
             pay();
         }
 
         public void pay() {
-            if (paid) throw new IllegalStateException("player already paid!"); // prevent me from myself
+            // stop() can be reached both from the last reveal tick and from Folia retiring the task
+            if (paid) return;
             this.paid = true;
 
             opening.remove(player.getUniqueId());
 
-            boolean success = false;
+            CompletableFuture<Void> result;
             try {
-                // Verifică dacă economia este PlayerPoints
-                if (pouch.getEconomyType().getPrefix().equalsIgnoreCase("PlayerPoints")) {
-                    // Obține instanța PlayerPointsAPI
-                    PlayerPointsAPI playerPointsAPI = null;
-                    Plugin pluginInstance = Bukkit.getServer().getPluginManager().getPlugin("PlayerPoints");
-
-                    if (pluginInstance instanceof PlayerPoints) {
-                        playerPointsAPI = ((PlayerPoints) pluginInstance).getAPI();
-                    }
-
-                    if (playerPointsAPI != null) {
-                        playerPointsAPI.give(player.getUniqueId(), (int) payment); // Give points
-                        success = true;
-                    } else {
-                        plugin.getLogger().severe("PlayerPoints API is not available.");
-                    }
-                } else {
-                    pouch.getEconomyType().processPayment(player, payment);
-                    success = true;
-                }
+                result = pouch.getEconomyType().processPayment(player, payment);
             } catch (Throwable t) {
-                if (plugin.getConfig().getBoolean("error-handling.log-failed-transactions", true)) {
-                    plugin.getLogger().log(Level.SEVERE, "Failed to process payment from pouch with ID '" + pouch.getId() + "' for player '" + player.getName()
-                            + "' of amount " + payment + " of economy " + pouch.getEconomyType().toString() + ": " + t.getMessage());
-                }
-                if (player.isOnline()) {
-                    if (plugin.getConfig().getBoolean("error-handling.refund-pouch", false)) {
-                        player.getInventory().addItem(pouch.getItemStack());
-                    }
-                    player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.REWARD_ERROR)
-                            .replace("%prefix%", pouch.getEconomyType().getPrefix())
-                            .replace("%suffix%", pouch.getEconomyType().getSuffix())
-                            .replace("%prize%", NumberFormat.getInstance().format(payment)));
-                }
-                t.printStackTrace();
+                result = CompletableFuture.failedFuture(t);
             }
+            // Some economies finish later (a console command runs on the global thread on Folia), so
+            // the player is only told once the outcome is known: the prize, or the error, never both
+            result.whenComplete((ignored, error) -> {
+                if (error != null) {
+                    logFailure(unwrap(error));
+                }
+                runForPlayer(() -> finish(error == null));
+            });
+        }
+
+        private void finish(boolean success) {
+            String prize = formatNumber(payment, separator);
             if (success) {
-                if (player.isOnline()) {
-                    playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
-                    player.sendMessage(plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE)
-                            .replace("%prefix%", pouch.getEconomyType().getPrefix())
-                            .replace("%suffix%", pouch.getEconomyType().getSuffix())
-                            .replace("%prize%", NumberFormat.getInstance().format(payment)));
-                }
+                playSound(player, plugin.getConfig().getString("pouches.sound.endsound"));
+                Text.send(player, pouch.getEconomyType().applyPlaceholders(
+                        plugin.getMessage(MoneyPouchDeluxe.Message.PRIZE_MESSAGE), prize));
+                return;
             }
+            if (plugin.getConfig().getBoolean("error-handling.refund-pouch", false)) {
+                plugin.giveOrDrop(player, pouch.getItemStack(), 1);
+            }
+            Text.send(player, pouch.getEconomyType().applyPlaceholders(
+                    plugin.getMessage(MoneyPouchDeluxe.Message.REWARD_ERROR), prize));
+        }
+
+        /**
+         * Runs on the player's thread, right away if already on it. Skipped if the player left:
+         * there's no one to message or refund (the failure itself has already been logged).
+         */
+        private void runForPlayer(Runnable action) {
+            if (player.isOnline()) {
+                plugin.runAtPlayer(player, action);
+            }
+        }
+
+        private void logFailure(Throwable error) {
+            if (!plugin.getConfig().getBoolean("error-handling.log-failed-transactions", true)) {
+                return;
+            }
+            String message = "Failed to process payment from pouch '" + pouch.getId() + "' for player '"
+                    + player.getName() + "' (" + player.getUniqueId() + ") amount " + payment
+                    + " " + pouch.getEconomyType() + ": " + error.getMessage();
+            if (error instanceof PaymentFailedException && error.getCause() == null) {
+                plugin.getLogger().severe(message); // an expected failure: the reason is enough
+            } else {
+                plugin.getLogger().log(Level.SEVERE, message, error);
+            }
+        }
+
+        private Throwable unwrap(Throwable error) {
+            while (error instanceof CompletionException && error.getCause() != null) {
+                error = error.getCause();
+            }
+            return error;
         }
     }
 }

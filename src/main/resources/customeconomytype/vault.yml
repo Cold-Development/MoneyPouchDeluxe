@@ -1,0 +1,19 @@
+# Money through Vault and any economy plugin behind it (EssentialsX, CMI, ...).
+# Use in pouches.yml with:  economytype: "VAULT"
+#
+# hook: vault deposits straight through Vault, so a failed deposit is detected: the player gets
+# 'reward-error' instead of 'prize-message', and the failure is logged (and refunded if enabled).
+# If Vault isn't installed, transaction-prize-command below is used instead.
+# Set hook to "command" to always use the command.
+hook: vault
+
+# %player% = the player who opened the pouch, %prize% = the amount they won.
+# The command runs from the console, without the leading slash.
+transaction-prize-command: "eco give %player% %prize%"
+
+# Display name, shown by %economy% in prize-message and reward-error
+name: ""
+
+# Shown around the amount in the title and messages
+prefix: "&a$"
+suffix: ""

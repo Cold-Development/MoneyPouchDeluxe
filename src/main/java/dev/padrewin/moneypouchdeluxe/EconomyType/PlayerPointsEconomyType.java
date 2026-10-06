@@ -1,44 +1,42 @@
 package dev.padrewin.moneypouchdeluxe.EconomyType;
 
-import dev.padrewin.moneypouchdeluxe.MoneyPouchDeluxe;
-import org.black_ixx.playerpoints.PlayerPointsAPI;
+import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
+import org.black_ixx.playerpoints.PlayerPoints;
 import org.bukkit.entity.Player;
 
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * Points through the PlayerPoints API, which tells whether the points were given.
+ * <p>
+ * Only created through {@link EconomyHooks} when PlayerPoints is installed, so its classes are
+ * never loaded without it.
+ */
 public class PlayerPointsEconomyType extends EconomyType {
 
-    private final MoneyPouchDeluxe plugin;
-
-    public PlayerPointsEconomyType(MoneyPouchDeluxe plugin, String prefix, String suffix) {
-        super(prefix, suffix);
-        this.plugin = plugin;
+    public PlayerPointsEconomyType(String name, String prefix, String suffix) {
+        super(name, prefix, suffix);
     }
 
     @Override
-    public void processPayment(Player player, long amount) {
-        PlayerPointsAPI playerPointsAPI = plugin.getPlayerPointsAPI();
-        if (playerPointsAPI != null) {
-            playerPointsAPI.give(player.getUniqueId(), (int) amount);
-        } else {
-            plugin.getLogger().warning("PlayerPoints API is not available. Could not process payment.");
+    public CompletableFuture<Void> processPayment(Player player, long amount) {
+        if (amount > Integer.MAX_VALUE) {
+            return failed("points amount is too large (max " + Integer.MAX_VALUE + ")");
         }
-    }
-
-    @Override
-    public boolean doTransaction(Player player, long amount) {
-        PlayerPointsAPI playerPointsAPI = plugin.getPlayerPointsAPI();
-        if (playerPointsAPI != null) {
-            if (playerPointsAPI.look(player.getUniqueId()) >= amount) {
-                playerPointsAPI.take(player.getUniqueId(), (int) amount);
-                return true;
+        try {
+            if (!PlayerPoints.getInstance().getAPI().give(player.getUniqueId(), (int) amount)) {
+                return failed("PlayerPoints refused to give the points");
             }
-        } else {
-            plugin.getLogger().warning("PlayerPoints API is not available. Could not process transaction.");
+            return paid();
+        } catch (Throwable t) {
+            return CompletableFuture.failedFuture(
+                    new PaymentFailedException("PlayerPoints threw an error while giving points", t));
         }
-        return false;
     }
 
     @Override
     public String toString() {
-        return "PlayerPointsEconomyType";
+        return "PlayerPoints";
     }
+
 }

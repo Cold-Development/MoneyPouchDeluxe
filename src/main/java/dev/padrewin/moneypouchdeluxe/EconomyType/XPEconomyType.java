@@ -1,36 +1,27 @@
 package dev.padrewin.moneypouchdeluxe.EconomyType;
 
-import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
 import org.bukkit.entity.Player;
+
+import java.util.concurrent.CompletableFuture;
 
 public class XPEconomyType extends EconomyType {
 
-    public XPEconomyType(String prefix, String suffix) {
-        super(prefix, suffix);
+    public XPEconomyType(String name, String prefix, String suffix) {
+        super(name, prefix, suffix);
     }
 
     @Override
-    public void processPayment(Player player, long amount) {
+    public CompletableFuture<Void> processPayment(Player player, long amount) {
         if (!player.isOnline()) {
-            throw new PaymentFailedException("Player is offline!", new AssertionError("Player is offline!"));
+            return failed("player is offline");
         }
-        int xp;
-        try {
-            xp = Integer.parseInt(String.valueOf(amount));
-        } catch (NumberFormatException ex) {
-            throw new PaymentFailedException("XP value is too large!");
+        if (amount > Integer.MAX_VALUE) {
+            return failed("XP amount is too large (max " + Integer.MAX_VALUE + ")");
         }
-        player.giveExp(xp);
+        player.giveExp((int) amount);
+        return paid();
     }
 
-    @Override
-    public boolean doTransaction(Player player, long amount) {
-        if (player.getTotalExperience() < amount) {
-            return false;
-        }
-        player.giveExp(Integer.parseInt(String.valueOf(amount)) * -1);
-        return true;
-    }
 
     @Override
     public String toString() {

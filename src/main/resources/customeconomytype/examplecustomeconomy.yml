@@ -1,14 +1,20 @@
-# This is an example of a custom economy
-# The expected behaviour is for this to be a pouch containing diamonds, rather than money,
-#   however you can use this feature to make this plugin compatible with any economy plugin,
-#   as long as there is a command to give money.
+# Example custom economy: a pouch full of diamonds instead of money.
 #
-# The name of this file (excluding the YML extension) is the id of the economy,
-#   and must be alphanumeric with no spaces and unique.
-# The command below will be executed when a player opens a pouch of this economy, 
-#   replace %player% with the player and %prize% with the reward.
+# Every currency other than XP is a file like this one, so MoneyPouchDeluxe works with any
+# plugin that has a command to give its currency, without depending on that plugin.
+#
+# The file name (without .yml) is the economy's id, used in pouches.yml as economytype.
+#   It must be alphanumeric, without spaces, and unique. This one is "examplecustomeconomy".
+#
+# %player% = the player who opened the pouch, %prize% = the amount they won.
+# The command runs from the console, without the leading slash.
+# If the command doesn't exist (e.g. its plugin was removed), the failure is logged with the
+# player and amount, and the player gets the 'reward-error' message.
 transaction-prize-command: "give %player% diamond %prize%"
 
-# You can configure the prefixes/suffixes the normal way in the main config
-# Use this website if you want to use CUSTOM HEADS => https://minecraft-heads.com
-# Copy and paste the "For Developers" Value key
+# Display name, shown by %economy% in prize-message and reward-error
+name: "diamonds"
+
+# Shown around the amount in the title and messages
+prefix: ""
+suffix: " Diamonds"
