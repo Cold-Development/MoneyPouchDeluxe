@@ -1,6 +1,6 @@
 # Money through Vault and any economy plugin behind it (EssentialsX, CMI, ...).
 # Use in pouches.yml with:  economytype: "VAULT"
-#
+
 # hook: vault deposits straight through Vault, so a failed deposit is detected: the player gets
 # 'reward-error' instead of 'prize-message', and the failure is logged (and refunded if enabled).
 # If Vault isn't installed, transaction-prize-command below is used instead.

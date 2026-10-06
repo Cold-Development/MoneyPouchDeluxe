@@ -9,6 +9,7 @@ import dev.padrewin.colddev.manager.PluginUpdateManager;
 import dev.padrewin.moneypouchdeluxe.manager.CommandManager;
 import dev.padrewin.moneypouchdeluxe.manager.LocaleManager;
 import dev.padrewin.moneypouchdeluxe.utils.ConfigFiles;
+import dev.padrewin.moneypouchdeluxe.utils.ConfigUpdater;
 import dev.padrewin.moneypouchdeluxe.EconomyType.*;
 import dev.padrewin.moneypouchdeluxe.Listener.UseListener;
 import dev.padrewin.moneypouchdeluxe.ItemGetter.ItemGetter;
@@ -112,23 +113,47 @@ public class MoneyPouchDeluxe extends ColdPlugin {
     }
 
     /**
-     * config.yml has to exist before ColdDev loads it in onEnable (it adds the 'locale' setting when
-     * missing): otherwise a first install would get a config.yml with only that setting in it.
-     * The setting is added as text to existing configs, so nothing else in them changes.
+     * config.yml has to exist and be up to date before ColdDev loads it in onEnable (it adds the
+     * 'locale' setting when missing): otherwise a first install would get a config.yml with only that
+     * setting in it. Settings added by an update are written into the owner's files here, keeping
+     * everything they changed (see {@link ConfigUpdater}).
      */
     @Override
     public void onLoad() {
         super.onLoad();
         saveDefaultConfig();
-        try {
-            if (ConfigFiles.addTopLevelKeyIfMissing(new File(getDataFolder(), "config.yml"), "locale", List.of(
-                    "# Language of the messages: the name of a file in the locale folder (en_US, ro_RO, ...)",
-                    "# Every message, including the prefix, is in that file.",
-                    "locale: en_US"))) {
-                getLogger().info("Added the 'locale' setting to config.yml.");
+        updateFile("config.yml");
+
+        // The economies that ship with the plugin (only if the owner still has them)
+        File economyFolder = new File(getDataFolder(), "customeconomytype");
+        if (economyFolder.isDirectory()) {
+            for (String name : List.of("vault.yml", "playerpoints.yml")) {
+                if (new File(economyFolder, name).exists()) {
+                    updateFile("customeconomytype/" + name);
+                }
+            }
+            if (new File(economyFolder, "README.txt").exists()) {
+                saveResource("customeconomytype/README.txt", true);
+            }
+        }
+    }
+
+    /**
+     * Adds the settings that are new in this version to one of the owner's files.
+     *
+     * @param path the file's path in the data folder, which is also its path in the jar
+     */
+    private void updateFile(String path) {
+        try (InputStream defaults = getResource(path)) {
+            if (defaults == null) {
+                return;
+            }
+            List<String> added = ConfigUpdater.update(new File(getDataFolder(), path), defaults);
+            if (!added.isEmpty()) {
+                getLogger().info(path + ": added " + added.size() + " new setting(s): " + String.join(", ", added));
             }
         } catch (IOException e) {
-            getLogger().warning("Could not add the 'locale' setting to config.yml: " + e.getMessage());
+            getLogger().warning("Could not add the new settings to " + path + ": " + e.getMessage());
         }
     }
 

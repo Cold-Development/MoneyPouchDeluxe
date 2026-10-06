@@ -1,6 +1,6 @@
 # Points through PlayerPoints.
 # Use in pouches.yml with:  economytype: "PlayerPoints"
-#
+
 # hook: playerpoints gives the points through the PlayerPoints API, so a failure is detected: the
 # player gets 'reward-error' instead of 'prize-message', and the failure is logged (and refunded if enabled).
 # If PlayerPoints isn't installed, transaction-prize-command below is used instead.
