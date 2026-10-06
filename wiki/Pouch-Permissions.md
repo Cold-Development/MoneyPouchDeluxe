@@ -3,7 +3,7 @@
 Every pouch is either:
 
 - **Public**: anyone who has it can open it. This is the default.
-- **Restricted**: only players with a specific permission can open it. Everyone else gets the `no-permission` message and **keeps the pouch** (it isn't used up).
+- **Restricted**: only players with a specific permission can open it. Everyone else gets the `pouch-no-permission` message and **keeps the pouch** (it isn't used up).
 
 > ⚠️ The permission only controls **opening** a pouch. Players can still hold, trade, drop or sell a restricted pouch. Giving pouches is controlled by `moneypouch.admin` (see [Commands and Permissions](Commands-and-Permissions)).
 
@@ -58,7 +58,7 @@ vippouch:
     - "&7Only &bVIPs &7can open this!"
 ```
 
-Then run `/mpa reload` and give the permission (see [below](#giving-the-permission)).
+Then run `/mp reload` and give the permission (see [below](#giving-the-permission)).
 
 ### Which node should I use?
 
@@ -81,7 +81,7 @@ Several pouches can share the same node, e.g. all VIP pouches use `moneypouch.vi
 
 The plugin **doesn't create the node for you**: for every pouch you want to restrict, you write it yourself. Using the pouch id keeps it easy to remember.
 
-**1. Find the pouch id.** It's the name of the block in `pouches.yml` (the line with no indentation), and it's what `/mpa list` shows at the start of each line:
+**1. Find the pouch id.** It's the name of the block in `pouches.yml` (the line with no indentation), and it's what `/mp list` shows at the start of each line:
 
 ```yaml
 pointspouch:        # ← the pouch id is "pointspouch"
@@ -120,7 +120,7 @@ xppouch:
     permission-required: moneypouch.pouches.xppouch
 ```
 
-**4. `/mpa reload`.**
+**4. `/mp reload`.**
 
 **5. Give each node to whoever should open that pouch** (the same node as in step 3):
 
@@ -130,7 +130,7 @@ xppouch:
 /lp group mvp     permission set moneypouch.pouches.xppouch true
 ```
 
-**6. Test with a non-OP account**: a player without the node gets `no-permission` and keeps the pouch.
+**6. Test with a non-OP account**: a player without the node gets `pouch-no-permission` and keeps the pouch.
 
 > 💡 The node in `pouches.yml` and the one in your permission plugin must match **character for character**. A typo (`moneypouch.pouch.xppouch`, `moneypouches.pouches.xppouch`) means nobody (except OPs) can open the pouch.
 
@@ -193,7 +193,7 @@ OPs can open **every** restricted pouch, even if you never gave them the permiss
 /lp user Steve permission check moneypouch.pouches.vippouch
 ```
 
-and `/mpa list` to confirm the pouch is loaded.
+and `/mp list` to confirm the pouch is loaded.
 
 ## Common setups
 
@@ -233,7 +233,7 @@ The pouch can be found by anyone (drops, trades, auctions), but only opened by p
 
 | Problem | Cause |
 |---|---|
-| Everyone can open the "VIP" pouch | The line is missing, is `false`/empty, or is not under `options:` (bad indentation). Check `/mpa list` after `/mpa reload`. |
+| Everyone can open the "VIP" pouch | The line is missing, is `false`/empty, or is not under `options:` (bad indentation). Check `/mp list` after `/mp reload`. |
 | Nobody (except OPs) can open it, even with the permission | You wrote `permission-required: true`, or a typo in the node. The node in the config and the one you gave must match exactly. |
 | It works for me but not for players | You are OP. Test without OP. |
-| I changed the permission but nothing changed | Run `/mpa reload`. Pouches already given out use the new permission after a reload. |
+| I changed the permission but nothing changed | Run `/mp reload`. Pouches already given out use the new permission after a reload. |

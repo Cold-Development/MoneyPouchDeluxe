@@ -3,10 +3,12 @@
 An **economy** is the currency a pouch pays out in. Each pouch picks one with `options.economytype`.
 
 - **XP** is built in.
-- **Every other currency is a small file** in `plugins/MoneyPouchDeluxe/customeconomytype/`. The file says which console command gives the currency to a player. This is how MoneyPouchDeluxe works with any economy plugin without depending on it.
+- **Every other currency is a small file** in `plugins/MoneyPouchDeluxe/customeconomytype/`. The file says how the currency is given to a player:
+  - **through a hook**: Vault or PlayerPoints, paid through their API, which tells whether the payment worked;
+  - **through a console command**: any plugin with a "give" command, without MoneyPouchDeluxe depending on it.
 
 ```
-/mpa economies        ← lists every loaded economy and its id
+/mp economies        ← lists every loaded economy, its id and how it pays
 ```
 
 ---
@@ -29,12 +31,11 @@ An **economy** is the currency a pouch pays out in. Each pouch picks one with `o
       suffix: " XP"
   ```
 
-## Custom economies (every other currency)
-
-### The file
+## The economy files
 
 ```yaml
 # plugins/MoneyPouchDeluxe/customeconomytype/vault.yml
+hook: vault
 transaction-prize-command: "eco give %player% %prize%"
 name: "money"
 prefix: "&a$"
@@ -43,7 +44,8 @@ suffix: ""
 
 | Key | Required | Description |
 |---|---|---|
-| `transaction-prize-command` | ✅ | The command that gives the prize. Runs **from the console**, **without** `/`. |
+| `hook` | ❌ | `vault`, `playerpoints` or `command` (default). See [below](#hooks-vault-and-playerpoints). |
+| `transaction-prize-command` | for `hook: command` | The command that gives the prize. Runs **from the console**, **without** `/`. Also used by a hook when its plugin isn't installed. |
 | `name` | ❌ | Display name, shown by `%economy%` in messages. Defaults to the file name. |
 | `prefix` | ❌ | Shown **before** the amount in the title and in messages (`%prefix%`). Colors allowed. |
 | `suffix` | ❌ | Shown **after** the amount (`%suffix%`). Colors allowed. |
@@ -69,7 +71,19 @@ The file name without `.yml` is the economy id you put in `economytype`:
 - The file name must contain **only letters and numbers**. `mob_coins.yml` or `mob-coins.yml` are **rejected** (console: `Invalid economy ID`). Use `mobcoins.yml`.
 - Only `.yml` files are read.
 
-### Adding a new currency, step by step
+## Hooks: Vault and PlayerPoints
+
+| `hook` | Pays through | Needs |
+|---|---|---|
+| `vault` | Vault, so whichever economy plugin is behind it (EssentialsX, CMI, ...) | Vault + an economy plugin |
+| `playerpoints` | The PlayerPoints API | PlayerPoints |
+| `command` (or no `hook`) | `transaction-prize-command` | the plugin that owns the command |
+
+A hook knows whether the payment worked: if the economy refuses it, the player gets `reward-error` and the failure is logged. If the hooked plugin isn't installed, `transaction-prize-command` is used instead (when the file has one).
+
+`vault.yml` and `playerpoints.yml` are generated with their hook. **`VAULT` and `PlayerPoints` also work without these files**, as long as Vault / PlayerPoints is installed: the name, prefix and suffix then come from `economy.vault` / `economy.playerpoints` in `config.yml` (default `&a$` and ` Points`).
+
+## Adding a new currency, step by step
 
 1. Find the console command your currency plugin uses to give currency to a player. Test it in the console first, with a real player name, e.g. `tokens give Steve 10`.
 2. Create `customeconomytype/tokens.yml`:
@@ -79,30 +93,20 @@ The file name without `.yml` is the economy id you put in `economytype`:
    prefix: ""
    suffix: " Tokens"
    ```
-3. `/mpa reload`
-4. `/mpa economies` must show `tokens`.
-5. Use it in a pouch: `economytype: "tokens"`, then `/mpa reload` again.
+3. `/mp reload`
+4. `/mp economies` must show `tokens`.
+5. Use it in a pouch: `economytype: "tokens"`, then `/mp reload` again.
 
 ### Ready-to-use files
 
 Copy the one you need into `customeconomytype/`. **Always check the command against your plugin's documentation**, commands can change between versions.
 
 <details open>
-<summary><b>Money: EssentialsX, or any plugin with <code>/eco give</code></b> → <code>vault.yml</code></summary>
+<summary><b>Money through Vault (EssentialsX, CMI, ...)</b> → <code>vault.yml</code></summary>
 
 ```yaml
-transaction-prize-command: "eco give %player% %prize%"
-name: "money"
-prefix: "&a$"
-suffix: ""
-```
-</details>
-
-<details>
-<summary><b>Money: CMI</b> → <code>vault.yml</code></summary>
-
-```yaml
-transaction-prize-command: "cmi money give %player% %prize%"
+hook: vault
+transaction-prize-command: "eco give %player% %prize%"   # only used if Vault is missing
 name: "money"
 prefix: "&a$"
 suffix: ""
@@ -113,7 +117,8 @@ suffix: ""
 <summary><b>PlayerPoints</b> → <code>playerpoints.yml</code></summary>
 
 ```yaml
-transaction-prize-command: "points give %player% %prize%"
+hook: playerpoints
+transaction-prize-command: "points give %player% %prize%"   # only used if PlayerPoints is missing
 name: "points"
 prefix: ""
 suffix: " Points"
@@ -153,12 +158,13 @@ transaction-prize-command: "<command> %player% %prize%"
 ```
 </details>
 
-### Prefix and suffix
+## Prefix and suffix
 
 They're shown around the amount:
 
 - in the **title**: `prefix` + `12,345` + `suffix`, colored by `prefix-colour` / `suffix-colour` in `config.yml`;
-- in the **messages** `prize-message` and `reward-error`, through `%prefix%%prize%%suffix%`.
+- in the **messages** `prize-message`, `prize-message-stack` and `reward-error`, through `%prefix%%prize%%suffix%`;
+- in `/mp list`.
 
 ```
 prefix: "&a$"   suffix: ""         →  $12,345
@@ -168,70 +174,33 @@ prefix: "⛃ "    suffix: " coins"   →  ⛃ 12,345 coins
 
 If the file has no `prefix` / `suffix` / `name`, the plugin uses `economy.<id>.prefix` / `suffix` / `name` from `config.yml`, if present.
 
-### What if the command fails?
+## What if a payment fails?
 
-If the command **doesn't exist** (the plugin was removed, a typo in the command name):
+In every case the player gets `reward-error` **instead of** the prize message, the failure is logged in the console (`error-handling.log-failed-transactions`) and in the [transaction log](Configuration#transaction-log), and the pouch is refunded if `error-handling.refund-pouch` is `true`.
 
-- the console logs: `Custom economy command failed, Steve did not receive 12345. Command: /eco give Steve 12345`
-- the player gets the `reward-error` message.
+What can be detected depends on how the economy pays:
 
-You can then give the prize by hand using the command from the log.
+| Economy | Detected failures |
+|---|---|
+| `hook: vault` | No economy plugin behind Vault, the economy refused the deposit, an error in the economy plugin |
+| `hook: playerpoints` | PlayerPoints refused, an amount too large for points |
+| `hook: command` | The command doesn't exist (its plugin was removed, a typo), or it threw an error |
+| `XP` | The player was offline, an amount too large |
 
-> ⚠️ The plugin can only detect a command that doesn't exist. If the command exists but **refuses** (wrong arguments, the target plugin has an error), MoneyPouchDeluxe can't know. That's why you should **test the command in the console** before using it.
+Example console line:
 
-Also see `error-handling` on [Main Configuration](Configuration#error-handling).
+```
+Failed to process payment from pouch 'moneypouch' for player 'Steve' (069a79f4-...) amount 12345 Command (/eco give %player% %prize%): unknown command: /eco give Steve 12345
+```
 
-### If a file is missing
+> ⚠️ With `hook: command`, the plugin can only detect a command that doesn't exist. If the command exists but **refuses** (wrong arguments, the target plugin has an error), MoneyPouchDeluxe can't know. That's why you should **test the command in the console** before using it, and prefer the Vault / PlayerPoints hooks when you can.
 
-If an economy file is deleted (or the whole `customeconomytype/` folder), the pouches using it are **skipped** with a warning, the other pouches keep working. Pouches of that type that players already have show the `invalid-pouch` message until the file is back.
+## If a file is missing
+
+If an economy file is deleted (or the whole `customeconomytype/` folder), the pouches using it are **skipped** with a warning, the other pouches keep working. Pouches of that type that players already have show the `invalid-pouch` message until the file is back. Exception: `VAULT` and `PlayerPoints` keep working without their file while their plugin is installed.
 
 The default files (`vault.yml`, `playerpoints.yml`, `examplecustomeconomy.yml`) are only generated when the `customeconomytype/` folder **doesn't exist**. To get them back, rename or delete the folder and restart, or copy them from [here](https://github.com/Cold-Development/MoneyPouchDeluxe/tree/master/src/main/resources/customeconomytype).
 
----
+## For developers
 
-## For developers: registering an economy from your plugin
-
-If a command isn't enough, your plugin can register its own economy type.
-
-1. Add `MoneyPouchDeluxe` to `softdepend` in your `plugin.yml`.
-2. Extend `dev.padrewin.moneypouchdeluxe.EconomyType.EconomyType`:
-
-```java
-import dev.padrewin.moneypouchdeluxe.EconomyType.EconomyType;
-import dev.padrewin.moneypouchdeluxe.Exception.PaymentFailedException;
-import org.bukkit.entity.Player;
-
-public class GemsEconomyType extends EconomyType {
-
-    public GemsEconomyType() {
-        super("gems", "", " Gems"); // name (%economy%), prefix, suffix
-    }
-
-    @Override
-    public void processPayment(Player player, long amount) {
-        if (!MyGemsApi.add(player.getUniqueId(), amount)) {
-            // logged by MoneyPouchDeluxe, and the player gets 'reward-error'
-            throw new PaymentFailedException("Could not add gems");
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "Gems"; // shown in /mpa list and /mpa economies
-    }
-}
-```
-
-3. Register it in `onEnable`:
-
-```java
-MoneyPouchDeluxe mpd = (MoneyPouchDeluxe) Bukkit.getPluginManager().getPlugin("MoneyPouchDeluxe");
-if (mpd != null) {
-    mpd.registerEconomyType("gems", new GemsEconomyType()); // "gems" = the economytype in pouches.yml
-}
-```
-
-Notes:
-- Ids are alphanumeric and stored lowercase. A conflicting id is ignored with a warning.
-- Pouches are loaded one tick after the server finishes enabling plugins, so registering in `onEnable` is early enough.
-- `/mpa reload` clears registered economies (only XP and the files are reloaded). If your plugin must survive a reload, register again when needed, or prefer a command-based file.
+A plugin can register its own economy through the API: see [Developer API](Developer-API#your-own-economy).

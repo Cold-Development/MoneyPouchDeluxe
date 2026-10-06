@@ -8,7 +8,7 @@ Default file: [pouches.yml](https://github.com/Cold-Development/MoneyPouchDeluxe
 - [Layout](#layout)
 - [All options](#all-options)
 - [name](#name) · [item](#item) · [Custom heads](#custom-heads-player_head--texture-url) · [pricerange](#pricerange) · [options.economytype](#optionseconomytype) · [options.permission-required](#optionspermission-required) · [lore](#lore)
-- [Extra item options](#extra-item-options): enchantments, itemflags, unbreakable, custommodeldata, attributemodifiers
+- [Extra item options](#extra-item-options): enchantments, itemflags, unbreakable, custommodeldata
 - [Full examples](#full-examples)
 
 ---
@@ -30,7 +30,7 @@ Every top-level key is **one pouch**. The key is the **pouch id**, used in `/mp 
     permission-required: ... # optional
   lore:
     - "..."
-  # optional extras: enchantments, itemflags, unbreakable, custommodeldata, attributemodifiers
+  # optional extras: enchantments, itemflags, unbreakable, custommodeldata
 ```
 
 Rules for the id:
@@ -41,7 +41,7 @@ Rules for the id:
 Rules for YAML:
 - Indent with **spaces**, never tabs. 2 spaces per level.
 - Put text in `"double quotes"`, especially if it contains `&`, `#`, `:` or starts with `%`, `<`, `*`.
-- Run `/mpa reload` after every change, then `/mpa list` to check.
+- Run `/mp reload` after every change, then `/mp list` to check.
 
 ## All options
 
@@ -59,13 +59,12 @@ Rules for YAML:
 | [`itemflags`](#itemflags) | ❌ | none | Hide enchantments, attributes, ... |
 | [`unbreakable`](#unbreakable) | ❌ | `false` | |
 | [`custommodeldata`](#custommodeldata) | ❌ | none | For resource packs. |
-| [`attributemodifiers`](#attributemodifiers) | ❌ | none | Attribute modifiers on the item. |
 
 ---
 
 ## `name`
 
-The item name. Supports `&` colors, hex, gradients, rainbow ([Colors and Formatting](Colors-and-Formatting)) and Nexo glyphs. It's also what `%item%` shows in the `give-item` / `receive-item` messages.
+The item name. Supports `&` colors, hex, gradients, rainbow ([Colors and Formatting](Colors-and-Formatting)) and Nexo glyphs. It's also what `%item%` shows in the `command-give-success` / `receive-item` messages.
 
 ```yaml
   name: "&6&lMoney Pouch &7(Right Click)"
@@ -116,14 +115,17 @@ pointspouch:
   ...
 ```
 
-`texture-url` accepts either:
-- the **Base64 value** (recommended), or
-- the direct texture link: `"http://textures.minecraft.net/texture/95fd67d56ffc53fb360a17879d9b5338d7332d8f129491a5e17e8d6e8aea6c3a"`.
+`texture-url` accepts any of:
+- the **Base64 value** (recommended),
+- the texture link: `"http://textures.minecraft.net/texture/95fd67d56ffc53fb360a17879d9b5338d7332d8f129491a5e17e8d6e8aea6c3a"`,
+- just the texture hash: `"95fd67d56ffc53fb360a17879d9b5338d7332d8f129491a5e17e8d6e8aea6c3a"`.
 
 Notes:
 - `texture-url` is only used with `item: "PLAYER_HEAD"`. With any other item, leave it `""` or remove it.
-- An invalid value logs `Invalid player-head texture` and gives a Steve/Alex head.
-- A textured head keeps only its **name and lore**: `enchantments`, `itemflags`, `custommodeldata`, `unbreakable` and `attributemodifiers` are ignored on it.
+- An invalid value logs `Invalid texture-url for pouch '<id>'` and gives a Steve/Alex head.
+- Works on every supported version, from 1.17 to 26.x.
+- Pouches with the same texture stack together, also with the ones given before a `/mp reload`.
+- `enchantments`, `itemflags`, `custommodeldata` and `unbreakable` work on heads too. The enchantment glow doesn't show on heads, though: the client draws them as 3D models.
 
 <details>
 <summary>Alternatives to <code>texture-url</code> (player skins)</summary>
@@ -166,14 +168,14 @@ The currency the prize is paid in.
 | Value | Pays out | Needs |
 |---|---|---|
 | `XP` | Experience points | Nothing, built in |
-| `VAULT` | Money via `customeconomytype/vault.yml` (`eco give`) | An economy plugin with `/eco give` (EssentialsX, CMI, ...) |
-| `PlayerPoints` | Points via `customeconomytype/playerpoints.yml` | PlayerPoints |
+| `VAULT` | Money through Vault (`customeconomytype/vault.yml`, `hook: vault`) | Vault + an economy plugin (EssentialsX, CMI, ...) |
+| `PlayerPoints` | Points through PlayerPoints (`customeconomytype/playerpoints.yml`, `hook: playerpoints`) | PlayerPoints |
 | `<file name>` | Whatever command that file runs | See [Economies](Custom-Economy-Types) |
 
 - Not case-sensitive: `VAULT` = `vault` = `Vault`.
 - The value is the name of a file in `customeconomytype/` **without `.yml`**.
-- Run `/mpa economies` to see the valid values.
-- If the economy doesn't exist, the **pouch is skipped** (missing from `/mpa list`) with a warning in the console.
+- Run `/mp economies` to see the valid values.
+- If the economy doesn't exist, the **pouch is skipped** (missing from `/mp list`) with a warning in the console.
 
 ## `options.permission-required`
 
@@ -220,7 +222,7 @@ The lines under the name.
 
 ## Extra item options
 
-All optional. They work on any item except a textured `PLAYER_HEAD`.
+All optional. They work on any item, custom heads included.
 
 ### `enchantments`
 
@@ -258,23 +260,6 @@ Gives the item a custom model from your resource pack.
   item: "PAPER"
   custommodeldata: 1001
 ```
-
-### `attributemodifiers`
-
-Adds attribute modifiers. Attributes: [Attribute](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html), operations: [Operation](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/AttributeModifier.Operation.html). Always set a fixed `uuid`.
-
-```yaml
-  attributemodifiers:
-    - attribute: GENERIC_MOVEMENT_SPEED
-      modifier:
-        uuid: "49dc07dc-bfdb-4dc7-85d3-66ef52b51858"
-        name: "generic.movementSpeed"
-        operation: ADD_NUMBER
-        amount: 0.03
-        equipmentslot: HAND
-```
-
-Rarely useful for a pouch (it's used up on the first click), mostly for the tooltip.
 
 ---
 

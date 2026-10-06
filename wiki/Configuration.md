@@ -1,20 +1,30 @@
 # Main Configuration (`config.yml`)
 
-`config.yml` controls how opening a pouch looks and sounds, what happens when a payout fails, and every message. The pouches themselves are in `pouches.yml` ([Pouch Configuration](Configuration-for-Pouches)).
+`config.yml` controls the language, how opening a pouch looks and sounds, what happens when a payout fails, the transaction log and where statistics are saved. The pouches themselves are in `pouches.yml` ([Pouch Configuration](Configuration-for-Pouches)), the messages in `locale/` ([Messages and Languages](Messages-and-Languages)).
 
 Default file: [config.yml](https://github.com/Cold-Development/MoneyPouchDeluxe/blob/master/src/main/resources/config.yml)
 
-Run `/mpa reload` after editing.
+Run `/mp reload` after editing. When the plugin updates, new settings are added to your file automatically, with their comments; your values and comments are kept.
 
 #### Jump to
+- [Language](#language)
 - [Sounds](#sounds)
 - [Title animation](#title-animation)
+- [Opening a whole stack](#opening-a-whole-stack)
 - [Error handling](#error-handling)
+- [Transaction log](#transaction-log)
 - [Economy (XP)](#economy)
-- [Messages](#messages)
-- [Hidden options](#hidden-options)
+- [Database](#database)
 
 ---
+
+## Language
+
+```yaml
+locale: en_US
+```
+
+The name of a file in the `locale/` folder (without `.yml`). `en_US` and `ro_RO` are included. Every message, including the prefix, is in that file: see [Messages and Languages](Messages-and-Languages).
 
 ## Sounds
 
@@ -27,9 +37,9 @@ pouches:
     endsound: "ENTITY_GENERIC_EXPLODE"  # when the prize is paid
 ```
 
-- Names come from the [Sound list](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html), in capitals.
+- Either the [Sound](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html) name in capitals (`BLOCK_CHEST_OPEN`), or the sound key (`block.chest.open`). Keys also work for sounds from a resource pack (`myserver:pouch_open`).
 - A wrong name is ignored silently (no sound, no error).
-- **To turn a sound off, set it to `""`.** (In 1.5.1, `enabled: false` does not turn the sounds off, so empty them instead.)
+- **To turn a sound off, set it to `""`.** (`enabled: false` doesn't turn them off, so empty them instead.)
 
 ## Title animation
 
@@ -64,17 +74,25 @@ reverse-pouch-reveal: true
 | `obfuscate-digit-char` | Character drawn (scrambled) for a hidden digit. |
 | `obfuscate-format-char` | Character drawn (scrambled) for a hidden separator, when `reveal-comma` is `false`. |
 | `format.enabled` | `true`: the title groups digits (`1,924,281`). `false`: `1924281`. |
-| `format.separator` | `","` → `1,924,281` · `"."` → `1.924.281` · `" "` → `1 924 281`. Also used for `%prize%` in messages. |
+| `format.separator` | `","` → `1,924,281` · `"."` → `1.924.281` · `" "` → `1 924 281`. Also used for `%prize%` in messages, `/mp list` and the `_formatted` placeholders. |
 | `format.reveal-comma` | `true`: separators are visible from the start. `false`: they're hidden like digits. |
 | `reverse-pouch-reveal` | `true`: digits are revealed **right to left** (units first, the suspense is on the big digits). `false`: left to right. |
 
 The title is shown with no fade-in, 2.5 seconds on screen and 1 second fade-out.
 
-> `%prize%` in `prize-message` / `reward-error` always uses `format.separator`, even when `format.enabled` is `false`. Set `separator: ""` for plain numbers everywhere.
+> `%prize%` in the messages always uses `format.separator`, even when `format.enabled` is `false`. Set `separator: ""` for plain numbers everywhere.
+
+## Opening a whole stack
+
+```yaml
+open-whole-stack-sneaking: true
+```
+
+With `true`, **sneak (shift) + right click** opens every pouch of the stack in the player's hand at once. Each pouch draws its own amount, the player gets the total in one payment, with one reveal and the `prize-message-stack` message. A normal right click still opens one pouch. `false` turns it off.
 
 ## Error handling
 
-What happens when a prize can't be paid.
+What happens when a prize can't be paid (the economy refused it, its plugin is missing, its command doesn't exist, ...).
 
 ```yaml
 error-handling:
@@ -84,12 +102,37 @@ error-handling:
 
 | Option | Description |
 |---|---|
-| `log-failed-transactions` | Logs the pouch, player and amount in the console when a payment fails, so you can pay the player by hand. **Keep it `true`.** |
-| `refund-pouch` | Gives the player a new pouch when the payment fails. Off by default: the second opening rolls a different prize, and if the economy is broken it will fail again anyway. |
+| `log-failed-transactions` | Logs the pouch, player, amount, economy and the reason in the console when a payment fails, so you can pay the player by hand. **Keep it `true`.** |
+| `refund-pouch` | Gives the player their pouch(es) back when the payment fails (the whole stack, for a sneak-opened stack). Off by default: the second opening rolls a different prize, and if the economy is broken it will fail again anyway. |
 
-In every case, the player gets the `reward-error` message, asking them to contact an admin.
+In every case the player gets the `reward-error` message **instead of** the prize message, never both. Failures are also written to the [transaction log](#transaction-log).
 
-Failures from a [custom economy](Custom-Economy-Types#what-if-the-command-fails) command that doesn't exist are **always** logged (with the exact command to run), and don't refund the pouch.
+What counts as a failure depends on the economy: see [Economies](Custom-Economy-Types#what-if-a-payment-fails).
+
+## Transaction log
+
+```yaml
+transaction-log:
+  enabled: true
+  keep-days: 30
+```
+
+Every pouch opened and every pouch given is written to `plugins/MoneyPouchDeluxe/logs/`, one file per day (`2026-10-06.log`):
+
+```
+[13:36:27] OPEN Steve (069a79f4-...) moneypouch x1 -> 12,345 vault: OK
+[13:37:05] OPEN Steve (069a79f4-...) moneypouch x6 -> 61,200 vault: OK
+[13:38:10] OPEN Alex (853c80ef-...) moneypouch x1 -> 8,400 vault: FAILED (no economy plugin is registered with Vault)
+[13:40:00] GIVE CONSOLE -> Steve (069a79f4-...) moneypouch x5
+[13:41:00] GIVE Admin -> * (12 players) votepouch x1
+```
+
+| Option | Description |
+|---|---|
+| `enabled` | `false` stops writing new lines. |
+| `keep-days` | Log files older than this many days are deleted automatically. `0` keeps them all. |
+
+The amount is the one actually paid (with boosters from other plugins, if any). The file is written in the background, so it never slows the server down. To find what a player got: search the files for their name or UUID.
 
 ## Economy
 
@@ -103,69 +146,20 @@ economy:
 
 The name, prefix and suffix of the built-in **XP** economy. Every other currency sets them in its own file in `customeconomytype/`.
 
-You can also add `economy.<id>` sections here for custom economies: they're used only when the economy's file has no `name` / `prefix` / `suffix`.
+You can also add `economy.<id>` sections here for other economies: they're used when the economy's file has no `name` / `prefix` / `suffix`, and by `VAULT` / `PlayerPoints` when their file doesn't exist.
 
-## Messages
-
-```yaml
-messages:
-  prefix: "&8「&6MoneyPouch&8」&7» "
-  full-inv: "&6%player%'s &finventory is &cfull&f. The pouch was dropped near the player."
-  player-full-inv: "&fYour inventory is &cfull&f. A pouch was dropped near you. Make sure to pick it up."
-  give-item: "&fYou have given &6%player%&f %item%&f."
-  receive-item: "&fYou have received &6%item%&f."
-  prize-message: "&fYou have received %prefix%%prize%%suffix%&f!"
-  already-opening: "&fPlease wait until you open the first pouch!"
-  invalid-pouch: "&fThis pouch no longer exists! &7(contact an administrator)"
-  reward-error: "&fThe reward %prefix%%prize%%suffix% &fhas failed."
-  no-permission: "&fYou do not have permission to open this pouch!"
-  reloaded: "&fMoneyPouchDeluxe has been reloaded."
-```
-
-- `prefix` is put in front of **every** message. Set it to `""` for no prefix.
-- **Set any message to `""` to disable it.**
-- Colors: [Colors and Formatting](Colors-and-Formatting). Nexo glyphs: [Nexo Integration](Nexo-Integration).
-
-> ⚠️ The default `prefix` contains `<glyph:icons_beetroot>`. **Without Nexo, this shows as plain text.** Replace it, e.g. `prefix: "&8「&6MoneyPouch&8」&7» "`.
-
-### When each message is sent
-
-| Message | Sent to | When | Placeholders |
-|---|---|---|---|
-| `give-item` | the giver | a pouch was given with `/mp` | `%player%`, `%item%` |
-| `receive-item` | the receiver | they got a pouch from `/mp` | `%player%`, `%item%` |
-| `full-inv` | the giver | the target's inventory was full, the pouch was dropped | `%player%` |
-| `player-full-inv` | the receiver | their inventory was full, the pouch was dropped at their feet | — |
-| `prize-message` | the opener | the prize was paid | `%prize%`, `%prefix%`, `%suffix%`, `%economy%` |
-| `reward-error` | the opener | the payment failed | `%prize%`, `%prefix%`, `%suffix%`, `%economy%` |
-| `already-opening` | the opener | they tried to open a pouch during another pouch's animation | — |
-| `no-permission` | the opener | the pouch needs a permission they don't have | — |
-| `invalid-pouch` | the opener | the pouch was deleted/renamed in `pouches.yml`, or its economy is missing | — |
-| `reloaded` | the admin | after `/mpa reload` | — |
-
-### Placeholders
-
-| Placeholder | Value |
-|---|---|
-| `%prize%` | Amount won, with `format.separator` (e.g. `12,345`) |
-| `%prefix%` / `%suffix%` | The economy's prefix / suffix |
-| `%economy%` | The economy's `name` |
-| `%item%` | The pouch's `name` |
-| `%player%` | The player's name (`everyone` for `/mp <pouch> *`) |
-
-Examples:
+## Database
 
 ```yaml
-  prize-message: "&fYou won &a%prefix%%prize%%suffix%&f!"             # You won $12,345!
-  prize-message: "&fYou won &e%prize% &f%economy%!"                   # You won 12,345 money!
-  receive-item: ""                                                    # no message when receiving a pouch
+mysql-settings:
+  enabled: false
+  hostname: 127.0.0.1
+  port: 3306
+  database-name: ''
+  user-name: ''
+  user-password: ''
+  use-ssl: false
+  connection-pool-size: 3
 ```
 
-## Hidden options
-
-Not in the default file, add them yourself if needed:
-
-```yaml
-options:
-  show-receive-message: true   # false: never send 'receive-item' (same as receive-item: "")
-```
+Where the player statistics used by the [PlaceholderAPI placeholders](PlaceholderAPI) are saved. By default (`enabled: false`) they're in a SQLite file, `moneypouchdeluxe.db`, with nothing to set up. Set `enabled: true` and fill in the connection to use a MySQL database instead, e.g. to share statistics between servers. Restart the server after changing it.

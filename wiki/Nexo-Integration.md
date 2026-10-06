@@ -42,10 +42,9 @@ moneypouch:
   lore:
     - "&7Prize: <glyph:icons_coin> &f%pricerange_from% - %pricerange_to%"
 
-# config.yml
-messages:
-  prefix: "&8「<glyph:icons_beetroot>&8」&7» "
-  prize-message: "&fYou won %prefix%%prize%%suffix% <glyph:icons_money>"
+# locale/en_US.yml
+prefix: '&8「<glyph:icons_beetroot>&8」&7» '
+prize-message: '&fYou won %prefix%%prize%%suffix% <glyph:icons_money>'
 ```
 
 ```yaml
@@ -59,14 +58,13 @@ suffix: ""
 - Works in: pouch `name` and `lore`, every message, the title `subtitle`, and economy `prefix` / `suffix` (so in the title too).
 - Players need the Nexo **resource pack** to see the icons.
 - An unknown glyph id is left as plain text, so you can spot the typo.
+- Glyphs work inside [gradients](Colors-and-Formatting#gradients) too.
 
 ## Without Nexo
 
-`<glyph:...>` tags are **not removed** when Nexo isn't installed: players will see the raw `<glyph:icons_beetroot>` text. The default `messages.prefix` contains one, so if you don't use Nexo, change it:
+`<glyph:...>` tags are **not removed** when Nexo isn't installed: players will see the raw `<glyph:icons_beetroot>` text. If you don't use Nexo, check the prefix and messages in `locale/`, pouch names, lore and economy prefixes for leftover `<glyph:...>` tags. (Servers updated from 1.x keep their old prefix, which contained one.)
 
 ```yaml
-messages:
-  prefix: "&8「&6MoneyPouch&8」&7» "
+# locale/en_US.yml
+prefix: '&8「&6MoneyPouch&8」&7» '
 ```
-
-Also check your pouch names, lore and economy prefixes for leftover `<glyph:...>` tags.

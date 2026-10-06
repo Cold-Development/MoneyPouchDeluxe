@@ -10,11 +10,14 @@
 * [Pouch Configuration](Configuration-for-Pouches)
 * [Economies](Custom-Economy-Types)
 * [Main Configuration](Configuration)
+* [Messages and Languages](Messages-and-Languages)
 * [Colors and Formatting](Colors-and-Formatting)
 
 **More**
+* [PlaceholderAPI](PlaceholderAPI)
 * [Nexo Integration](Nexo-Integration)
 * [Using Pouches with Other Plugins](Using-Pouches-with-Other-Plugins)
+* [Developer API](Developer-API)
 * [FAQ and Troubleshooting](FAQ-and-Troubleshooting)
 
 ---

@@ -3,10 +3,10 @@
 Pouches are usually handed out by other plugins: crates, vote rewards, quests, shops, mob drops. All of them can do it with the same **console command**:
 
 ```
-mp <pouch id> <player> [amount]
+mp give <pouch id> <player> [amount]
 ```
 
-(no `/` in most plugins' command rewards)
+or the short form `mp <pouch id> <player> [amount]`, which older versions used: both work. (No `/` in most plugins' command rewards.)
 
 The only thing that changes between plugins is the **placeholder for the player's name**: `%player%`, `%player_name%`, `{player}`, ... Check your plugin's documentation.
 
@@ -81,4 +81,6 @@ But a copied item keeps the look it had when it was copied. With the command, pl
 - The player must be **online** when the command runs.
 - A full inventory never loses the pouch: it's dropped at the player's feet.
 - If the pouch requires a permission to open, the player needs it too. Pouches given by crates and votes are usually public: leave `permission-required` out. See [Pouch Permissions](Pouch-Permissions).
-- Want to hide the "You have received ..." message when a plugin gives a pouch? Set `receive-item: ""` in `config.yml`.
+- Want to hide the "You have received ..." message when a plugin gives a pouch? Set `receive-item: ''` in your [locale file](Messages-and-Languages).
+- Every pouch given is written to the [transaction log](Configuration#transaction-log), with who gave it.
+- Writing a plugin? Use the [Developer API](Developer-API) (`givePouch`, events) instead of commands.

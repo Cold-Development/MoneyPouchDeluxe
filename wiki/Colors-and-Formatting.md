@@ -1,6 +1,6 @@
 # Colors and Formatting
 
-Colors work in pouch **names and lore**, **messages**, the **title** settings, and economy **prefixes / suffixes**.
+Colors work in pouch **names and lore**, **messages** (`locale/`), the **title** settings, and economy **prefixes / suffixes**.
 
 ## Legacy color codes
 
@@ -44,7 +44,16 @@ name: "<gradient:#00C6FF:#0072FF:#7F00FF>VIP Pouch"     # 3 or more colors work 
 name: "<g:#FFD700:#FF4500>&lGold Pouch"                  # bold gradient
 ```
 
-The gradient spreads over the text that follows it, until the next color code.
+The gradient spreads over the text that follows it, until the next color code. So put a color after the part that should be colored:
+
+```yaml
+prize-message: '&fYou have received <g:#355B16:#57951E:#355B16>%prefix%%prize%%suffix%&f!'
+```
+
+- If a placeholder right after the gradient brings its own color (an economy prefix like `&a$`), that color is used and the gradient is skipped.
+- Nexo glyphs inside a gradient keep working.
+- Format codes (`&l`, `&o`, ...) after the gradient tag apply to the whole gradient: `<g:#FFD700:#FF4500>&lGold Pouch`.
+- On a single character (e.g. an amount of `1`) a gradient shows only its first color.
 
 ## Rainbow
 
@@ -62,5 +71,5 @@ With Nexo installed, `<glyph:id>` shows a Nexo icon. See [Nexo Integration](Nexo
 
 - Always put colored text in `"double quotes"` in YAML.
 - If a name or lore line shows in italics, start it with a color code (e.g. `&f`), or use `&r` first.
-- Test colors quickly: edit, `/mpa reload`, `/mp <pouch>`. Pouches given **before** the change keep their old look.
+- Test colors quickly: edit, `/mp reload`, `/mp give <pouch>`. Pouches given **before** the change keep their old look.
 - [Birdflop's RGB tool](https://www.birdflop.com/resources/rgb/) is handy to design gradients; use the `&#rrggbb` output format.

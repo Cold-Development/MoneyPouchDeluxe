@@ -11,15 +11,16 @@ This guide walks you through creating a pouch from scratch. As an example, we'll
 A pouch pays out in a currency (an "economy"). Run this in game or in the console:
 
 ```
-/mpa economies
+/mp economies
 ```
 
 You'll see something like:
 
 ```
-xp XP [/ XP]
-vault Custom (/eco give %player% %prize%) [&a$/]
-playerpoints Custom (/points give %player% %prize%) [/ Points]
+Economies (3)
+ » playerpoints PlayerPoints | 123 Points
+ » vault Vault (EssentialsX) | $123
+ » xp XP | 123 XP
 ```
 
 The first word of each line is the **economy id** you will put in the pouch. For money we'll use `vault`.
@@ -72,32 +73,35 @@ There is no `permission-required` line, so **anyone can open this pouch**. To re
 ## Step 4: Reload and check
 
 ```
-/mpa reload
-/mpa list
+/mp reload
+/mp list
 ```
 
 `goldpouch` must appear in the list:
 
 ```
-goldpouch (min: 1000, max: 5000, economy: Custom (/eco give %player% %prize%) [&a$/])
+Pouches (4)
+ » goldpouch $1,000 - $5,000 | economy: vault
 ```
 
 **Not in the list?** Look at the console, it says why:
 
 | Console message | Fix |
 |---|---|
-| `Skipping pouch 'goldpouch': economy type 'X' is missing` | The economy id is wrong, or its file in `customeconomytype/` is missing. Compare with `/mpa economies`. |
+| `Skipping pouch 'goldpouch': economy type 'X' is missing` | The economy id is wrong, or its file in `customeconomytype/` is missing. Compare with `/mp economies`. |
 | `Unrecognised material: X` | The `item` isn't a valid material. The pouch still loads, but as **stone**. |
 | A YAML error / nothing at all | The file has a syntax error (usually tabs or wrong indentation). Paste it into [yamllint.com](https://www.yamllint.com/) to find the line. |
 
 ## Step 5: Give it and test it
 
 ```
-/mp goldpouch                   → gives one to yourself
-/mp goldpouch Steve             → gives one to Steve
-/mp goldpouch Steve 5           → gives 5 to Steve
-/mp goldpouch * 1               → gives one to every online player (needs moneypouch.admin.giveall)
+/mp give goldpouch              → gives one to yourself
+/mp give goldpouch Steve        → gives one to Steve
+/mp give goldpouch Steve 5      → gives 5 to Steve
+/mp give goldpouch * 1          → gives one to every online player (needs moneypouch.admin.giveall)
 ```
+
+`/mp goldpouch Steve 5` (without `give`) works too.
 
 Hold it in your **main hand** and right-click (in the air or on a block). The title animation plays, and when it ends the money is paid and you get the `prize-message`.
 
@@ -125,7 +129,7 @@ Use `moneypouch.pouches.` + **your pouch id**, written exactly like the id. A pe
 
 ## Step 7 (optional): Make it look nicer
 
-- **Custom head** instead of a block: [Custom heads](Configuration-for-Pouches#custom-heads-player_head--texture-url).
+- **Custom head** instead of a block: [Custom heads](Configuration-for-Pouches#custom-heads-player_head--texture-url). The enchantment glow doesn't show on heads (the client draws them as 3D models).
 - **Enchantment glow**: add an enchantment and hide it:
   ```yaml
     enchantments:
@@ -167,7 +171,7 @@ Every pouch item stores **only its pouch id**. When it's opened, the plugin look
 
 | You change... | Pouches that players already have... |
 |---|---|
-| `pricerange`, `economytype`, `permission-required` | **use the new values** right after `/mpa reload`. |
+| `pricerange`, `economytype`, `permission-required` | **use the new values** right after `/mp reload`. |
 | `name`, `lore`, `item`, texture, enchantments | **keep their old look**. Only newly given pouches look different. They still open normally. |
 | the **id** (rename the block) | **stop working**: "This pouch no longer exists!". Keep the old id, or add a pouch with the old id back. |
 | delete the pouch | **stop working**: they show the `invalid-pouch` message and can't be opened or placed. |
@@ -180,4 +184,4 @@ Every pouch item stores **only its pouch id**. When it's opened, the plugin look
 - A player can only open **one pouch at a time**. Right-clicking another during the animation shows `already-opening` and doesn't use it.
 - If the player **logs out** during the animation, the prize is still paid at that moment (except XP, which can only be given to an online player: that failure is logged in the console).
 - If the inventory is **full** when a pouch is given, it's **dropped at the player's feet** (never lost) and they get a message.
-- A stack of pouches opens **one per click**.
+- A stack of pouches opens **one per click**, or **all at once with sneak (shift) + right click** (see [Opening a whole stack](Configuration#opening-a-whole-stack)).
