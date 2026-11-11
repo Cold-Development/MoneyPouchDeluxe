@@ -1,17 +1,30 @@
 name: Announce release on Discord
 
 on:
+  # The real path: fires by itself whenever a release is published.
   release:
     types: [published]
+  # The test path: "Run workflow" in the Actions tab.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to announce (leave empty for the newest release)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Only print the message, post nothing to Discord'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
 jobs:
   notify:
-    # Pre-releases are not announced - the in-plugin update check ignores them too,
-    # so a pre-release should not reach players from either direction.
-    if: ${{ github.event.release.prerelease == false }}
+    # Pre-releases are not announced - the in-plugin update check ignores them too, so a
+    # pre-release should not reach players from either direction. A manual run is always
+    # allowed: on workflow_dispatch there is no release object to read this from.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,10 +35,14 @@ jobs:
           # ---- edit this one: where the Purchase button sends people ----
           PURCHASE_URL: https://builtbybit.com/resources/moneypouchdeluxe.49617/
           PLUGIN_NAME: MoneyPouchDeluxe
-          # The release notes go in through the environment on purpose. Interpolating
-          # ${{ github.event.release.body }} straight into a run: block would let anything
-          # written in the notes run as shell.
-          TAG: ${{ github.event.release.tag_name }}
+          # On a release event these come from the payload. On a manual run they are empty
+          # and the script looks the release up through the GitHub API instead.
+          # The release notes go in through the environment on purpose: interpolating
+          # ${{ github.event.release.body }} into a run: block would let anything written
+          # in the notes run as shell.
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
           RELEASE_URL: ${{ github.event.release.html_url }}
           RELEASE_BODY: ${{ github.event.release.body }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/discord-release.py
