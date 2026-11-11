@@ -4,6 +4,11 @@
 ![Folia](https://img.shields.io/badge/Folia-supported-green.svg)
 ![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)
 
+## 🛒 Get MoneyPouchDeluxe
+
+Purchase **MoneyPouchDeluxe** on **[BuiltByBit](https://builtbybit.com/resources/moneypouchdeluxe.49617/)**.
+<br><br>
+
 # 💰 MoneyPouchDeluxe
 
 **MoneyPouchDeluxe** adds pouches that players right-click to win a random amount of any currency, revealed digit by digit in an animated title.
