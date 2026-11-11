@@ -5,9 +5,14 @@ Runs from .github/workflows/discord-release.yml. Everything comes from the envir
   DISCORD_WEBHOOK  the webhook URL (repo secret - never printed)
   PURCHASE_URL     where the "Purchase" button points
   PLUGIN_NAME      display name in the heading
-  TAG              release tag, e.g. v2.0.1
-  RELEASE_URL      html_url of the release, for the "full changelog" link
+  TAG              release tag, e.g. v2.0.1 - optional on a manual run
+  RELEASE_URL      html_url of the release; when empty the release is looked up instead
   RELEASE_BODY     the release notes as written on GitHub
+  DRY_RUN          print the payload and post nothing
+
+On a release event the workflow passes TAG/RELEASE_URL/RELEASE_BODY straight from the
+payload. On a manual run they are absent, so the release is fetched from the GitHub API -
+by TAG if one was given, otherwise the newest one.
 """
 import json
 import os
@@ -19,6 +24,33 @@ import urllib.request
 ACCENT = 0x57F287          # same green the Auxilor notifier uses
 CHANGELOG_LIMIT = 1200     # a TextDisplay takes up to 4000 chars; stay well under
 MAX_LINES = 10
+
+
+def truthy(value):
+    return str(value or "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def fetch_release(repo, tag, token):
+    """Look a release up when the workflow was started by hand rather than by a release."""
+    path = "releases/tags/%s" % urllib.parse.quote(tag) if tag else "releases/latest"
+    headers = {"Accept": "application/vnd.github+json",
+               "User-Agent": "mpd-release-notify/1.0"}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    req = urllib.request.Request("https://api.github.com/repos/%s/%s" % (repo, path),
+                                 headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.load(resp)
+    except urllib.error.HTTPError as e:
+        hint = " - no published release yet?" if e.code == 404 else ""
+        sys.exit("notify: GitHub returned HTTP %d for %s%s" % (e.code, path, hint))
+    except urllib.error.URLError as e:
+        sys.exit("notify: could not reach the GitHub API: %s" % e.reason)
+
+    if data.get("draft"):
+        sys.exit("notify: %s is still a draft - nothing to announce" % data.get("tag_name"))
+    return (data.get("tag_name") or "", data.get("html_url") or "", data.get("body") or "")
 
 
 def env(name, required=True):
@@ -92,15 +124,23 @@ def build_payload(plugin, tag, release_url, body, purchase_url):
 
 
 def main():
-    payload = build_payload(
-        env("PLUGIN_NAME"),
-        env("TAG"),
-        env("RELEASE_URL"),
-        os.environ.get("RELEASE_BODY", ""),
-        env("PURCHASE_URL"),
-    )
+    tag = os.environ.get("TAG", "").strip()
+    release_url = os.environ.get("RELEASE_URL", "").strip()
+    body = os.environ.get("RELEASE_BODY", "")
 
-    if os.environ.get("DRY_RUN"):
+    # A release event fills all three in. A manual run fills none, so go and look.
+    if not release_url:
+        tag, release_url, body = fetch_release(
+            env("GITHUB_REPOSITORY"), tag, os.environ.get("GITHUB_TOKEN", ""))
+        print("notify: resolved release %s from the GitHub API" % tag, file=sys.stderr)
+
+    if not tag:
+        sys.exit("notify: could not determine the release tag")
+
+    payload = build_payload(env("PLUGIN_NAME"), tag, release_url, body,
+                            env("PURCHASE_URL"))
+
+    if truthy(os.environ.get("DRY_RUN")):
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return
 
