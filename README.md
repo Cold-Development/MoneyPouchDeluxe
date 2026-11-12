@@ -1,5 +1,5 @@
 ![image](https://imgur.com/FRoQbVI.png)<br>
-![Version](https://img.shields.io/badge/Version-v2.0.0-blue?color=799aca)
+[![Latest Release](https://img.shields.io/github/v/release/Cold-Development/MoneyPouchDeluxe?label=Version&color=799aca)](https://github.com/Cold-Development/MoneyPouchDeluxe/releases/latest)
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.17%2B-green.svg)
 ![Folia](https://img.shields.io/badge/Folia-supported-green.svg)
 ![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)
